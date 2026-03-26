@@ -19,3 +19,6 @@
 3. venv erstellen 
 4. venv aktivieren
 5. Pakete installieren: pip install -r requirements.txt 
+
+## Datenbankschema
+![Datenbankschema](Datenbankschema.png)

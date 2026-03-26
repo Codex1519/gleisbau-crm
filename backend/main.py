@@ -1,3 +1,4 @@
+# FastAPI Framework importieren
 from fastapi import FastAPI
 
 app = FastAPI()
