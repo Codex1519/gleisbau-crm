@@ -18,4 +18,4 @@
 2. In *backend* navigieren
 3. venv erstellen 
 4. venv aktivieren
-5. *wid laufend aktiviert* 
+5. Pakete installieren: pip install -r requirements.txt 
