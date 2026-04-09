@@ -67,3 +67,43 @@ class ProjektMaschinen(Base):
     maschinen_id = Column(Integer, ForeignKey("maschinen.id"), primary_key=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class Personal(Base):
+    __tablename__ = "personal"
+    id = Column(Integer, primary_key=True)
+    nachname = Column(String(100))
+    vorname = Column(String(100))
+    geburtsjahr = Column(Date)
+    strasse = Column(String(150))
+    hausnummer = Column(String(10))
+    plz = Column(String(5))
+    ort = Column(String(100))
+    telefon = Column(String(20))
+    position = Column(String(100))
+    einstellungsdatum = Column(Date)
+    crm_rolle = Column(String(50))
+    kranktage = Column(Integer)
+    urlaubstage = Column(Integer)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class Notfallkontakte (Base):
+    id = Column(Integer, primary_key=True)
+    personal_id = Column(Integer, ForeignKey("personal.id"))
+    nachname = Column(String(100))
+    vorname = Column(String(100))
+    telefon = Column(String(20))
+    beziehung = Column(String(50))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class Qualifikation(Base):
+    id = Column(Integer, primary_key=True)
+    personal_id = Column(Integer, ForeignKey("personal.id"))
+    bezeichnung = Column(String(200))
+    gueltig_bis = Column(Date)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class Zeiterfassung(Base):
+    id = Column(Integer, primary_key=True)
