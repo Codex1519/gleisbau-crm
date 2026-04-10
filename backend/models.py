@@ -61,7 +61,7 @@ class Dokument(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-class ProjektMaschinen(Base):
+class ProjektMaschine(Base):
     __tablename__ = "projekt_maschinen"
     projekt_id = Column(Integer, ForeignKey("projekte.id"), primary_key=True)
     maschinen_id = Column(Integer, ForeignKey("maschinen.id"), primary_key=True)
@@ -73,7 +73,7 @@ class Personal(Base):
     id = Column(Integer, primary_key=True)
     nachname = Column(String(100))
     vorname = Column(String(100))
-    geburtsjahr = Column(Date)
+    geburtsdatum = Column(Date)
     strasse = Column(String(150))
     hausnummer = Column(String(10))
     plz = Column(String(5))
@@ -87,7 +87,8 @@ class Personal(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-class Notfallkontakte (Base):
+class Notfallkontakt (Base):
+    __tablename__ = "notfallkontakte"
     id = Column(Integer, primary_key=True)
     personal_id = Column(Integer, ForeignKey("personal.id"))
     nachname = Column(String(100))
@@ -98,6 +99,7 @@ class Notfallkontakte (Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class Qualifikation(Base):
+    __tablename__ = "qualifikationen"
     id = Column(Integer, primary_key=True)
     personal_id = Column(Integer, ForeignKey("personal.id"))
     bezeichnung = Column(String(200))
@@ -106,4 +108,34 @@ class Qualifikation(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class Zeiterfassung(Base):
+    __tablename__ = "zeiterfassungen"
     id = Column(Integer, primary_key=True)
+    personal_id = Column(Integer, ForeignKey("personal.id"))
+    projekt_id = Column(Integer, ForeignKey("projekte.id"))
+    start_zeit = Column(DateTime)
+    end_zeit = Column(DateTime)
+    pause_minuten = Column(Integer)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class Maschine(Base):
+    __tablename__ = "maschinen"
+    id = Column(Integer, primary_key=True)
+    typ = Column(String(100))
+    baujahr = Column(Integer)
+    status = Column(String(50))
+    tuev_datum = Column(Date)
+    kennzeichen = Column(String(50))
+    naechste_wartung = Column(Date)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class Bautagesbericht(Base):
+    __tablename__ = "bautagesberichte"
+    id = Column(Integer, primary_key=True)
+    projekt_id = Column(Integer, ForeignKey("projekte.id"))
+    personal_id = Column(Integer, ForeignKey("personal.id"))
+    datum = Column(Date)
+    beschreibung = Column(Text)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
