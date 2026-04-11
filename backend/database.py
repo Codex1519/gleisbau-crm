@@ -10,3 +10,10 @@ Base = declarative_base()
 
 # Dient als Schnittstelle zur Datenbank. Verwaltet Transaktionen, verfolgt Änderungen an Objekten
 Session = sessionmaker(engine)
+
+def get_db():
+    db = Session()
+    try: 
+        yield db
+    finally: 
+        db.close()
