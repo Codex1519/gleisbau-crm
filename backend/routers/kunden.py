@@ -5,19 +5,19 @@ from schemas import KundeCreate, KundeUpdate
 
 router = APIRouter()
 
-
 @router.get("/kunden")
 async def read_kunden(db = Depends(get_db)):
     kunden = db.query(Kunde).all()
     return kunden
 
-@router.post("/kunden")
+@router.post("/kunden", status_code=201)
 async def create_kunde(kunde: KundeCreate, db = Depends(get_db)):
     neuer_kunde = Kunde(name=kunde.name, strasse=kunde.strasse, hausnummer=kunde.hausnummer, plz=kunde.plz, ort=kunde.ort, telefon=kunde.telefon, email=kunde.email)
     db.add(neuer_kunde)
     db.commit()
     db.refresh(neuer_kunde)
     return neuer_kunde
+
 
 @router.get("/kunden/{id}")
 async def read_kunde(id: int, db = Depends(get_db)):
@@ -58,10 +58,3 @@ async def update_kunde(id: int, kunde_update: KundeUpdate, db = Depends(get_db))
     db.refresh(kunde)
     return kunde
 
-@router.post("/kunden", status_code=201)
-async def create_kunde(kunde: KundeCreate, db = Depends(get_db)):
-    neuer_kunde = Kunde(name=kunde.name, strasse=kunde.strasse, hausnummer=kunde.hausnummer, plz=kunde.plz, ort=kunde.ort, telefon=kunde.telefon, email=kunde.email)
-    db.add(neuer_kunde)
-    db.commit()
-    db.refresh(neuer_kunde)
-    return neuer_kunde

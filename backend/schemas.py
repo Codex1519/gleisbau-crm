@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import date
 
 class KundeCreate(BaseModel):
     name: str
@@ -17,3 +18,19 @@ class KundeUpdate(BaseModel):
     ort: str | None = None
     telefon: str | None = None
     email: str | None = None
+
+class MaschineCreate(BaseModel):
+    typ: str
+    baujahr: int
+    status: str
+    tuev_datum: date
+    kennzeichen: str
+    naechste_wartung: date
+
+class MaschineUpdate(BaseModel):
+    typ: str | None = None
+    baujahr: int | None = None
+    status: str | None = None
+    tuev_datum: date | None = None
+    kennzeichen: str | None = None
+    naechste_wartung: date | None = None
