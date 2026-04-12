@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from database import get_db
 from models import Kunde
 from schemas import KundeCreate, KundeUpdate
@@ -57,3 +57,11 @@ async def update_kunde(id: int, kunde_update: KundeUpdate, db = Depends(get_db))
     db.commit()
     db.refresh(kunde)
     return kunde
+
+@router.post("/kunden", status_code=201)
+async def create_kunde(kunde: KundeCreate, db = Depends(get_db)):
+    neuer_kunde = Kunde(name=kunde.name, strasse=kunde.strasse, hausnummer=kunde.hausnummer, plz=kunde.plz, ort=kunde.ort, telefon=kunde.telefon, email=kunde.email)
+    db.add(neuer_kunde)
+    db.commit()
+    db.refresh(neuer_kunde)
+    return neuer_kunde
