@@ -2,6 +2,8 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,node,macos
 .claude/
 
+*.db
+
 ### macOS ###
 # General
 .DS_Store
