@@ -20,7 +20,7 @@ async def create_maschine(maschine: MaschineCreate, db = Depends(get_db)):
 
 @router.get("/maschinen/{id}")
 async def read_maschine(id: int, db = Depends(get_db)):
-    maschine = db.query(Maschine).filter(Maschine.id== id).first()
+    maschine = db.query(Maschine).filter(Maschine.id == id).first()
     if not maschine:
         raise HTTPException(status_code=404, detail="Maschine nicht gefunden")
     return maschine
@@ -39,21 +39,18 @@ async def update_maschine(id: int, maschine_update: MaschineUpdate, db = Depends
     maschine = db.query(Maschine).filter(Maschine.id == id).first()
     if not maschine:
         raise HTTPException(status_code=404, detail="Maschine nicht gefunden")
-    if maschine_update.name is not None:
+    if maschine_update.typ is not None:
         maschine.typ = maschine_update.typ
-    if maschine.baujahr is not None:
+    if maschine_update.baujahr is not None:
         maschine.baujahr = maschine_update.baujahr
-    if maschine.status is not None:
+    if maschine_update.status is not None:
         maschine.status = maschine_update.status
-    if maschine.tuev_datum is not None:
+    if maschine_update.tuev_datum is not None:
         maschine.tuev_datum = maschine_update.tuev_datum
-    if maschine.kennzeichen is not None:
+    if maschine_update.kennzeichen is not None:
         maschine.kennzeichen = maschine_update.kennzeichen
-    if maschine.naechste_wartung is not None:
+    if maschine_update.naechste_wartung is not None:
         maschine.naechste_wartung = maschine_update.naechste_wartung
     db.commit()
     db.refresh(maschine)
     return maschine
-
-
-

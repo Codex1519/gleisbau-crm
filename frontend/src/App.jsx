@@ -1,121 +1,84 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { Fragment } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { MODULE } from './modules'
+import { Layout } from './components/Layout'
+import { ToastProvider } from './contexts/ToastContext'
+import { Dashboard } from './pages/Dashboard'
+import { ListPage } from './pages/ListPage'
+import { FormPage } from './pages/FormPage'
+import { DetailPage } from './pages/DetailPage'
+import { KundeDetail } from './pages/KundeDetail'
+import { PersonalDetail } from './pages/PersonalDetail'
+import { ProjektDetail } from './pages/ProjektDetail'
+import { ZeiterfassungenListe } from './pages/ZeiterfassungenListe'
+import { ZeiterfassungNeu } from './pages/ZeiterfassungNeu'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+// Sondermodule mit individueller Detail-Seite (Akten-Ansicht mit Verknüpfungen).
+const CUSTOM_DETAIL = {
+  kunden: KundeDetail,
+  personal: PersonalDetail,
+  projekte: ProjektDetail,
 }
 
-export default App
+// Module mit komplett eigener Listenansicht (statt generischer ListPage).
+const CUSTOM_LISTE = {
+  zeiterfassungen: ZeiterfassungenListe,
+}
+
+// Module mit komplett eigenem Anlege-Formular (statt generischer FormPage).
+const CUSTOM_NEU = {
+  zeiterfassungen: ZeiterfassungNeu,
+}
+
+// Module ohne aufrufbare Detail-Seite — Einträge sind nur im Kontext sinnvoll.
+const KEINE_DETAIL_ROUTE = new Set(['zeiterfassungen'])
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Dashboard />} />
+
+          {MODULE.map((m) => {
+            const CustomListe = CUSTOM_LISTE[m.key]
+            const CustomNeu = CUSTOM_NEU[m.key]
+            const CustomDetail = CUSTOM_DETAIL[m.key]
+
+            const listenElement = CustomListe ? (
+              <CustomListe />
+            ) : (
+              <ListPage modulKey={m.key} />
+            )
+            const neuElement = CustomNeu ? (
+              <CustomNeu />
+            ) : (
+              <FormPage modulKey={m.key} />
+            )
+            const detailElement = CustomDetail ? (
+              <CustomDetail />
+            ) : (
+              <DetailPage modulKey={m.key} />
+            )
+
+            return (
+              <Fragment key={m.key}>
+                <Route path={`/${m.key}`} element={listenElement} />
+                <Route path={`/${m.key}/neu`} element={neuElement} />
+                {!KEINE_DETAIL_ROUTE.has(m.key) && (
+                  <Route
+                    path={`/${m.key}/:id`}
+                    element={detailElement}
+                  />
+                )}
+              </Fragment>
+            )
+          })}
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </ToastProvider>
+  )
+}
