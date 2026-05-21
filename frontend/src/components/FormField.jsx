@@ -27,6 +27,23 @@ export function FormField({ feld, wert, onChange, fkOptionen, disabled }) {
           value={wert ?? ''}
           onChange={(e) => onChange(e.target.value)}
         />
+      ) : feld.type === 'enum' ? (
+        <select
+          id={id}
+          required={feld.required || undefined}
+          disabled={disabled}
+          value={wert ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="" disabled>
+            Bitte auswählen…
+          </option>
+          {feld.optionen?.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       ) : feld.type === 'fk' ? (
         <select
           id={id}
@@ -90,6 +107,7 @@ export function bereiteFormDatenAuf(modul, form) {
     if (f.type === 'number' || f.type === 'fk') {
       out[f.name] = Number(v)
     } else {
+      // text / textarea / date / datetime-local / enum: String beibehalten
       out[f.name] = v
     }
   }

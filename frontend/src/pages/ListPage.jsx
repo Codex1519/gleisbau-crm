@@ -7,6 +7,7 @@ import { Alert } from '../components/Alert'
 import { EmptyState } from '../components/EmptyState'
 import { LadeBlock } from '../components/Spinner'
 import { Sektion } from '../components/Sektion'
+import { StatusBadge } from '../components/StatusBadge'
 import { IconPlus, IconSearch, IconRefresh } from '../components/Icons'
 import { ladeFkDaten } from '../lib/fkLoader'
 import { formatiereWert } from '../components/FormField'
@@ -171,10 +172,21 @@ export function ListPage({ modulKey }) {
                     <td className="col-id">#{e.id}</td>
                     {spalten.map((key, idx) => {
                       const f = modul.felder.find((x) => x.name === key)
+                      const isPrimary = idx === 0
+                      // Enum-Felder als Status-Badge rendern
+                      if (f?.type === 'enum') {
+                        return (
+                          <td key={key}>
+                            <StatusBadge
+                              optionen={f.optionen}
+                              value={e[key]}
+                            />
+                          </td>
+                        )
+                      }
                       const formatted = f
                         ? formatiereWert(f, e[key], fkLabels)
                         : e[key]
-                      const isPrimary = idx === 0
                       return (
                         <td
                           key={key}

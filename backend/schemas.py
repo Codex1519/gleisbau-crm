@@ -191,6 +191,7 @@ class BautagesberichtCreate(BaseModel):
     projekt_id: int
     personal_id: int
     datum: date
+    wetter: str | None = None
     beschreibung: str | None = None
 
 
@@ -198,4 +199,5 @@ class BautagesberichtUpdate(BaseModel):
     projekt_id: int | None = None
     personal_id: int | None = None
     datum: date | None = None
+    wetter: str | None = None
     beschreibung: str | None = None

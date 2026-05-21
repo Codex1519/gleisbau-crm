@@ -1,12 +1,22 @@
 // Konfiguration aller Module für Liste, Formular und Detail-Anzeige
 //
-// felder[].type: 'text' | 'number' | 'date' | 'datetime-local' | 'textarea' | 'fk'
-// felder[].fk:   { module: 'kunden', display: 'name' }  (nur bei type 'fk')
+// felder[].type:  'text' | 'number' | 'date' | 'datetime-local' | 'textarea'
+//                 | 'fk' | 'enum'
+// felder[].fk:    { module: 'kunden', display: 'name' }  (nur bei type 'fk')
+// felder[].optionen: [{ value, label, farbe? }]          (nur bei type 'enum')
 //
 // listSpalten:   Welche Felder in der Listenansicht erscheinen
 // searchKeys:    Welche Felder bei der Suche durchsucht werden
 // sektionen:     Gruppierung der Felder für die Detail-Ansicht
 // displayName:   Wie ein Eintrag in Listen/Breadcrumbs erscheint
+
+// Status-Werte für Projekte (auch vom Kanban-Board genutzt).
+export const PROJEKT_STATUS = [
+  { value: 'Anfrage', label: 'Anfrage', farbe: 'grau' },
+  { value: 'In Planung', label: 'In Planung', farbe: 'blau' },
+  { value: 'In Ausführung', label: 'In Ausführung', farbe: 'gelb' },
+  { value: 'Abgeschlossen', label: 'Abgeschlossen', farbe: 'gruen' },
+]
 
 export const MODULE = [
   {
@@ -126,7 +136,13 @@ export const MODULE = [
       },
       { name: 'auftragsnummer', label: 'Auftragsnummer', type: 'text' },
       { name: 'beschreibung', label: 'Beschreibung', type: 'textarea' },
-      { name: 'status', label: 'Status', type: 'text' },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'enum',
+        optionen: PROJEKT_STATUS,
+        required: true,
+      },
       { name: 'start_datum', label: 'Start', type: 'date' },
       { name: 'end_datum', label: 'Ende', type: 'date' },
       { name: 'budget_geplant', label: 'Budget geplant (€)', type: 'number' },
@@ -256,19 +272,20 @@ export const MODULE = [
       },
       {
         name: 'personal_id',
-        label: 'Personal',
+        label: 'Ersteller',
         type: 'fk',
         fk: { module: 'personal' },
         required: true,
       },
       { name: 'datum', label: 'Datum', type: 'date', required: true },
+      { name: 'wetter', label: 'Wetter', type: 'text' },
       { name: 'beschreibung', label: 'Beschreibung', type: 'textarea' },
     ],
-    listSpalten: ['datum', 'projekt_id', 'personal_id'],
-    searchKeys: ['beschreibung'],
+    listSpalten: ['datum', 'projekt_id', 'personal_id', 'wetter'],
+    searchKeys: ['beschreibung', 'wetter'],
     sektionen: [
       { titel: 'Zuordnung', felder: ['projekt_id', 'personal_id'] },
-      { titel: 'Bericht', felder: ['datum', 'beschreibung'] },
+      { titel: 'Bericht', felder: ['datum', 'wetter', 'beschreibung'] },
     ],
   },
 

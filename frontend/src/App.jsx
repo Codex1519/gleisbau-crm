@@ -12,6 +12,9 @@ import { PersonalDetail } from './pages/PersonalDetail'
 import { ProjektDetail } from './pages/ProjektDetail'
 import { ZeiterfassungenListe } from './pages/ZeiterfassungenListe'
 import { ZeiterfassungNeu } from './pages/ZeiterfassungNeu'
+import { BautagesberichteListe } from './pages/BautagesberichteListe'
+import { BautagesberichtNeu } from './pages/BautagesberichtNeu'
+import { ProjekteListe } from './pages/ProjekteListe'
 import './App.css'
 
 // Sondermodule mit individueller Detail-Seite (Akten-Ansicht mit Verknüpfungen).
@@ -24,11 +27,14 @@ const CUSTOM_DETAIL = {
 // Module mit komplett eigener Listenansicht (statt generischer ListPage).
 const CUSTOM_LISTE = {
   zeiterfassungen: ZeiterfassungenListe,
+  bautagesberichte: BautagesberichteListe,
+  projekte: ProjekteListe,
 }
 
 // Module mit komplett eigenem Anlege-Formular (statt generischer FormPage).
 const CUSTOM_NEU = {
   zeiterfassungen: ZeiterfassungNeu,
+  bautagesberichte: BautagesberichtNeu,
 }
 
 // Module ohne aufrufbare Detail-Seite — Einträge sind nur im Kontext sinnvoll.

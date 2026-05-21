@@ -136,6 +136,7 @@ class Bautagesbericht(Base):
     projekt_id = Column(Integer, ForeignKey("projekte.id"))
     personal_id = Column(Integer, ForeignKey("personal.id"))
     datum = Column(Date)
+    wetter = Column(String(100))
     beschreibung = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

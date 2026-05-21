@@ -241,26 +241,84 @@ export function ProjektDetail() {
                 count={berichte.length}
                 aktionen={
                   <Link
-                    to="/bautagesberichte/neu"
+                    to={`/bautagesberichte/neu?projekt_id=${projekt.id}`}
                     className="btn btn-secondary"
                   >
                     <IconPlus />
                     Neu
                   </Link>
                 }
+                tight={berichte.length > 0}
               >
-                <RelatedList
-                  modulKey="bautagesberichte"
-                  eintraege={berichte}
-                  renderSubtext={(b) => {
-                    const p = personalMap.get(b.personal_id)
-                    const name = p
-                      ? [p.vorname, p.nachname].filter(Boolean).join(' ')
-                      : null
-                    return [b.datum, name].filter(Boolean).join(' · ')
-                  }}
-                  leerText="Keine Berichte"
-                />
+                {berichte.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '24px 12px' }}>
+                    <div className="empty-state-title">Keine Berichte</div>
+                    <div className="empty-state-text">
+                      Über „+ Neu" oben kann der erste Bautagesbericht
+                      erfasst werden.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="tabelle-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Datum</th>
+                          <th>Ersteller</th>
+                          <th>Wetter</th>
+                          <th>Kurzbeschreibung</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...berichte]
+                          .sort((a, b) =>
+                            String(b.datum || '').localeCompare(
+                              String(a.datum || '')
+                            )
+                          )
+                          .map((b) => {
+                            const ersteller = personalMap.get(b.personal_id)
+                            return (
+                              <tr
+                                key={b.id}
+                                className="zeile-klickbar"
+                                onClick={() =>
+                                  navigate(`/bautagesberichte/${b.id}`)
+                                }
+                              >
+                                <td className="muted-cell">{b.datum || '—'}</td>
+                                <td className="primary-cell">
+                                  {ersteller
+                                    ? [ersteller.vorname, ersteller.nachname]
+                                        .filter(Boolean)
+                                        .join(' ')
+                                    : `#${b.personal_id}`}
+                                </td>
+                                <td
+                                  className={b.wetter ? '' : 'empty'}
+                                >
+                                  {b.wetter || '—'}
+                                </td>
+                                <td
+                                  className={
+                                    b.beschreibung ? 'muted-cell' : 'empty'
+                                  }
+                                  style={{
+                                    maxWidth: 380,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {b.beschreibung || '—'}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </Sektion>
 
               <Sektion titel="Dokumente" count={dokumente.length}>
