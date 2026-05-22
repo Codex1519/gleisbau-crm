@@ -1332,3 +1332,222 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
     padding-right: 38px;
   }
 }
+
+/* ============================================
+   Baufortschritt-Balken & Slider
+   ============================================ */
+.fortschritt-balken {
+  height: 8px;
+  background: var(--bg-muted);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  margin-top: 8px;
+}
+.fortschritt-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  transition: width 150ms ease;
+}
+.fortschritt-fill.farbe-grau { background: var(--slate-400); }
+.fortschritt-fill.farbe-gelb { background: #ca8a04; }
+.fortschritt-fill.farbe-blau { background: var(--accent); }
+.fortschritt-fill.farbe-gruen { background: var(--success); }
+
+.fortschritt-slider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Kompakter Balken in Tabellenzeilen */
+.fortschritt-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+.fortschritt-mini .bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-muted);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.fortschritt-mini .bar > div {
+  height: 100%;
+  border-radius: var(--r-full);
+}
+.fortschritt-mini .pct {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  min-width: 34px;
+  text-align: right;
+}
+
+/* ============================================
+   Wetter-Badge
+   ============================================ */
+.wetter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.wetter-badge .ico {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* ============================================
+   Bautagesbericht-Detail (Dokument)
+   ============================================ */
+.dok-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xs);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.dok-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.dok-header .dok-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.dok-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.dok-meta-item .label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.dok-meta-item .wert {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+.dok-wetter-gross {
+  font-size: 22px;
+}
+
+.dok-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* ============================================
+   Timeline (Bautagesberichte auf Projekt-Detail)
+   ============================================ */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 4px 4px;
+}
+.timeline-item {
+  position: relative;
+  padding: 0 0 18px 24px;
+  border-left: 2px solid var(--border);
+}
+.timeline-item:last-child {
+  border-left-color: transparent;
+  padding-bottom: 0;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--accent);
+}
+.timeline-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.timeline-link:hover {
+  border-color: var(--accent-soft-border);
+  background: var(--bg-hover);
+}
+.timeline-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.timeline-datum {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.timeline-text {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+   Druck-Layout (PDF-Export via window.print)
+   ============================================ */
+@media print {
+  .sidebar,
+  .topbar,
+  .breadcrumb,
+  .page-header .aktionen,
+  .no-print {
+    display: none !important;
+  }
+  .app {
+    display: block !important;
+  }
+  .content {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .card,
+  .dok-header {
+    box-shadow: none !important;
+    border-color: #ccc !important;
+    break-inside: avoid;
+  }
+  body {
+    background: #fff !important;
+  }
+  a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+}

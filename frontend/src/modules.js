@@ -262,6 +262,9 @@ export const MODULE = [
     icon: 'document',
     displayName: (e) =>
       `Bericht ${e.datum || `#${e.id}`}`,
+    // Liste / Formular / Detail werden von Custom-Komponenten gerendert
+    // (BautagesberichteListe, BautagesberichtNeu, BautagesberichtDetail).
+    // Diese Config dient v. a. Sidebar, displayName und FK-Auflösung.
     felder: [
       {
         name: 'projekt_id',
@@ -271,7 +274,7 @@ export const MODULE = [
         required: true,
       },
       {
-        name: 'personal_id',
+        name: 'ersteller_id',
         label: 'Ersteller',
         type: 'fk',
         fk: { module: 'personal' },
@@ -279,13 +282,13 @@ export const MODULE = [
       },
       { name: 'datum', label: 'Datum', type: 'date', required: true },
       { name: 'wetter', label: 'Wetter', type: 'text' },
-      { name: 'beschreibung', label: 'Beschreibung', type: 'textarea' },
+      { name: 'arbeiten_durchgefuehrt', label: 'Durchgeführte Arbeiten', type: 'textarea' },
     ],
-    listSpalten: ['datum', 'projekt_id', 'personal_id', 'wetter'],
-    searchKeys: ['beschreibung', 'wetter'],
+    listSpalten: ['datum', 'projekt_id', 'ersteller_id', 'wetter'],
+    searchKeys: ['arbeiten_durchgefuehrt', 'wetter', 'bemerkungen'],
     sektionen: [
-      { titel: 'Zuordnung', felder: ['projekt_id', 'personal_id'] },
-      { titel: 'Bericht', felder: ['datum', 'wetter', 'beschreibung'] },
+      { titel: 'Zuordnung', felder: ['projekt_id', 'ersteller_id'] },
+      { titel: 'Bericht', felder: ['datum', 'wetter', 'arbeiten_durchgefuehrt'] },
     ],
   },
 

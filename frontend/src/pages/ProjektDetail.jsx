@@ -23,12 +23,19 @@ import {
   IconSave,
   IconX,
 } from '../components/Icons'
+import {
+  wetterIcon,
+  fortschrittFarbe,
+  erstellerId,
+  hatInhalt,
+} from '../lib/bautagesbericht'
 
 export function ProjektDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
   const modul = findModul('projekte')
+  const personalModul = findModul('personal')
 
   const [projekt, setProjekt] = useState(null)
   const [kunden, setKunden] = useState([])
@@ -126,10 +133,26 @@ export function ProjektDetail() {
 
   const titel = projekt ? modul.displayName(projekt) : `#${id}`
 
-  // Beteiligte Personen aus Bautagesberichten ableiten (unique)
+  // Bautagesberichte – neueste zuerst (für den Zeitstrahl)
+  const sortierteBerichte = useMemo(
+    () =>
+      [...berichte].sort((a, b) =>
+        String(b.datum || '').localeCompare(String(a.datum || ''))
+      ),
+    [berichte]
+  )
+
+  // Baufortschritt laut dem neuesten Bericht
+  const aktuellerFortschritt = useMemo(() => {
+    const neuester = sortierteBerichte[0]
+    if (!neuester || neuester.baufortschritt == null) return null
+    return Number(neuester.baufortschritt) || 0
+  }, [sortierteBerichte])
+
+  // Beteiligte Personen aus Bautagesberichten ableiten (unique, via Ersteller)
   const beteiligtePersonen = useMemo(() => {
     if (berichte.length === 0) return []
-    const ids = new Set(berichte.map((b) => b.personal_id))
+    const ids = new Set(berichte.map((b) => erstellerId(b)).filter(Boolean))
     return [...ids].map((pid) => personalMap.get(pid)).filter(Boolean)
   }, [berichte, personalMap])
 
@@ -240,15 +263,26 @@ export function ProjektDetail() {
                 titel="Bautagesberichte"
                 count={berichte.length}
                 aktionen={
-                  <Link
-                    to={`/bautagesberichte/neu?projekt_id=${projekt.id}`}
-                    className="btn btn-secondary"
-                  >
-                    <IconPlus />
-                    Neu
-                  </Link>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {aktuellerFortschritt != null && (
+                      <span
+                        className={`status-badge farbe-${fortschrittFarbe(
+                          aktuellerFortschritt
+                        )}`}
+                        title="Baufortschritt laut neuestem Bericht"
+                      >
+                        {aktuellerFortschritt}% Fortschritt
+                      </span>
+                    )}
+                    <Link
+                      to={`/bautagesberichte/neu?projekt_id=${projekt.id}`}
+                      className="btn btn-secondary"
+                    >
+                      <IconPlus />
+                      Neu
+                    </Link>
+                  </div>
                 }
-                tight={berichte.length > 0}
               >
                 {berichte.length === 0 ? (
                   <div className="empty-state" style={{ padding: '24px 12px' }}>
@@ -259,65 +293,54 @@ export function ProjektDetail() {
                     </div>
                   </div>
                 ) : (
-                  <div className="tabelle-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Datum</th>
-                          <th>Ersteller</th>
-                          <th>Wetter</th>
-                          <th>Kurzbeschreibung</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...berichte]
-                          .sort((a, b) =>
-                            String(b.datum || '').localeCompare(
-                              String(a.datum || '')
-                            )
-                          )
-                          .map((b) => {
-                            const ersteller = personalMap.get(b.personal_id)
-                            return (
-                              <tr
-                                key={b.id}
-                                className="zeile-klickbar"
-                                onClick={() =>
-                                  navigate(`/bautagesberichte/${b.id}`)
-                                }
+                  <ul className="timeline">
+                    {sortierteBerichte.map((b) => {
+                      const ersteller = personalMap.get(erstellerId(b))
+                      const pct = Number(b.baufortschritt) || 0
+                      const vorschau =
+                        b.arbeiten_durchgefuehrt || b.bemerkungen || ''
+                      return (
+                        <li className="timeline-item" key={b.id}>
+                          <Link
+                            to={`/bautagesberichte/${b.id}`}
+                            className="timeline-link"
+                          >
+                            <div className="timeline-kopf">
+                              <span className="timeline-datum">
+                                {hatInhalt(b.wetter) && (
+                                  <span style={{ marginRight: 6 }}>
+                                    {wetterIcon(b.wetter)}
+                                  </span>
+                                )}
+                                {b.datum || `#${b.id}`}
+                              </span>
+                              <span
+                                className={`status-badge farbe-${fortschrittFarbe(
+                                  pct
+                                )}`}
                               >
-                                <td className="muted-cell">{b.datum || '—'}</td>
-                                <td className="primary-cell">
-                                  {ersteller
-                                    ? [ersteller.vorname, ersteller.nachname]
-                                        .filter(Boolean)
-                                        .join(' ')
-                                    : `#${b.personal_id}`}
-                                </td>
-                                <td
-                                  className={b.wetter ? '' : 'empty'}
-                                >
-                                  {b.wetter || '—'}
-                                </td>
-                                <td
-                                  className={
-                                    b.beschreibung ? 'muted-cell' : 'empty'
-                                  }
-                                  style={{
-                                    maxWidth: 380,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {b.beschreibung || '—'}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
+                                {pct}%
+                              </span>
+                            </div>
+                            {ersteller && (
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  color: 'var(--text-muted)',
+                                  marginTop: 2,
+                                }}
+                              >
+                                {personalModul.displayName(ersteller)}
+                              </div>
+                            )}
+                            {vorschau && (
+                              <div className="timeline-text">{vorschau}</div>
+                            )}
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
                 )}
               </Sektion>
 

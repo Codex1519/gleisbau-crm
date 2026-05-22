@@ -32,12 +32,50 @@ def fuehre_migrationen_aus() -> None:
     """
     inspector = inspect(engine)
 
-    # bautagesberichte.wetter (neu in v0.2)
     bautagesberichte_cols = {c["name"] for c in inspector.get_columns("bautagesberichte")}
+
+    # Neue Spalten von v0.2 (wetter) und v0.5 (erweitertes Bautagebuch).
+    # name -> SQL-Typ. Nur fehlende werden per ALTER TABLE angelegt.
+    neue_spalten = {
+        "wetter": "VARCHAR(100)",
+        "ersteller_id": "INTEGER",
+        "temperatur": "INTEGER",
+        "arbeiten_durchgefuehrt": "TEXT",
+        "personal_anwesend": "TEXT",
+        "maschinen_eingesetzt": "TEXT",
+        "materiallieferungen": "TEXT",
+        "behinderungen": "TEXT",
+        "besondere_vorkommnisse": "TEXT",
+        "baufortschritt": "INTEGER",
+        "bemerkungen": "TEXT",
+    }
+
     with engine.begin() as conn:
-        if "wetter" not in bautagesberichte_cols:
-            conn.execute(text("ALTER TABLE bautagesberichte ADD COLUMN wetter VARCHAR(100)"))
-            print("Migration: Spalte 'wetter' zu bautagesberichte hinzugefügt")
+        for name, typ in neue_spalten.items():
+            if name not in bautagesberichte_cols:
+                conn.execute(
+                    text(f"ALTER TABLE bautagesberichte ADD COLUMN {name} {typ}")
+                )
+                print(f"Migration: Spalte '{name}' zu bautagesberichte hinzugefügt")
+
+        # Bestandsdaten übernehmen: alter Ersteller (personal_id) -> ersteller_id,
+        # alte Kurzbeschreibung -> arbeiten_durchgefuehrt.
+        if "personal_id" in bautagesberichte_cols:
+            conn.execute(
+                text(
+                    "UPDATE bautagesberichte SET ersteller_id = personal_id "
+                    "WHERE ersteller_id IS NULL AND personal_id IS NOT NULL"
+                )
+            )
+        if "beschreibung" in bautagesberichte_cols:
+            conn.execute(
+                text(
+                    "UPDATE bautagesberichte "
+                    "SET arbeiten_durchgefuehrt = beschreibung "
+                    "WHERE arbeiten_durchgefuehrt IS NULL "
+                    "AND beschreibung IS NOT NULL AND TRIM(beschreibung) <> ''"
+                )
+            )
 
         # projekte.status: bestehende NULL/leere Werte auf 'Anfrage' setzen
         # (für das Kanban-Board v0.2 — vier feste Status-Werte).

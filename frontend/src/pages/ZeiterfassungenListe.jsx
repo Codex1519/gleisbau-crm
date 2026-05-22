@@ -12,7 +12,8 @@ import { Stundenzettel } from '../components/Stundenzettel'
 import { MitarbeiterZusammenfassung } from '../components/MitarbeiterZusammenfassung'
 import { WochenUebersicht } from '../components/WochenUebersicht'
 import { ZeiterfassungEditModal } from '../components/ZeiterfassungEditModal'
-import { IconPlus, IconRefresh } from '../components/Icons'
+import { CsvImportModal } from '../components/CsvImportModal'
+import { IconPlus, IconRefresh, IconUpload } from '../components/Icons'
 import {
   berechneGesamtMinuten,
   eintragDatum,
@@ -52,6 +53,7 @@ export function ZeiterfassungenListe() {
   const [bis, setBis] = useState(heuteISO)
 
   const [editEintrag, setEditEintrag] = useState(null)
+  const [importOffen, setImportOffen] = useState(false)
 
   useEffect(() => {
     laden()
@@ -82,6 +84,15 @@ export function ZeiterfassungenListe() {
   )
   const projekteMap = useMemo(
     () => new Map(projekte.map((p) => [p.id, p])),
+    [projekte]
+  )
+
+  const personalIds = useMemo(
+    () => new Set(personal.map((p) => p.id)),
+    [personal]
+  )
+  const projektIds = useMemo(
+    () => new Set(projekte.map((p) => p.id)),
     [projekte]
   )
 
@@ -177,6 +188,15 @@ export function ZeiterfassungenListe() {
         </div>
         <div className="aktionen">
           <ViewToggle view={view} onChange={setView} />
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setImportOffen(true)}
+            title="Zeiterfassungen aus CSV importieren"
+          >
+            <IconUpload />
+            Import CSV
+          </button>
           <button
             type="button"
             className="btn btn-secondary"
@@ -388,6 +408,14 @@ export function ZeiterfassungenListe() {
         projekte={projekte}
         onClose={() => setEditEintrag(null)}
         onGespeichert={handleGespeichert}
+      />
+
+      <CsvImportModal
+        offen={importOffen}
+        onClose={() => setImportOffen(false)}
+        personalIds={personalIds}
+        projektIds={projektIds}
+        onFertig={laden}
       />
     </div>
   )

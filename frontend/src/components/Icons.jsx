@@ -112,6 +112,19 @@ export const IconX = (p) => (
     <path {...stroke} d="M5 5l10 10M15 5 5 15" strokeWidth="1.9" />
   </Svg>
 )
+export const IconPrint = (p) => (
+  <Svg {...p}>
+    <path {...stroke} d="M6 8V3h8v5M6 14H4V8h12v6h-2M7 12h6v5H7z" />
+  </Svg>
+)
+export const IconUpload = (p) => (
+  <Svg {...p}>
+    <path
+      {...stroke}
+      d="M10 14V5m0 0L6.5 8.5M10 5l3.5 3.5M4 15h12"
+    />
+  </Svg>
+)
 export const IconRefresh = (p) => (
   <Svg {...p}>
     <path {...stroke} d="M3 10a7 7 0 0 1 12-4.95M17 10a7 7 0 0 1-12 4.95M15 3v3h-3M5 17v-3h3" />

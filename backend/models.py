@@ -134,9 +134,26 @@ class Bautagesbericht(Base):
     __tablename__ = "bautagesberichte"
     id = Column(Integer, primary_key=True)
     projekt_id = Column(Integer, ForeignKey("projekte.id"))
+    # Ersteller des Berichts (FK auf personal). personal_id ist die Altlast
+    # aus v0.2 und wird per Migration nach ersteller_id übertragen.
+    ersteller_id = Column(Integer, ForeignKey("personal.id"))
     personal_id = Column(Integer, ForeignKey("personal.id"))
     datum = Column(Date)
+    # Wetter & Bedingungen
     wetter = Column(String(100))
+    temperatur = Column(Integer)
+    # Baustellenaktivität
+    arbeiten_durchgefuehrt = Column(Text)
+    personal_anwesend = Column(Text)
+    maschinen_eingesetzt = Column(Text)
+    materiallieferungen = Column(Text)
+    # Besonderheiten
+    behinderungen = Column(Text)
+    besondere_vorkommnisse = Column(Text)
+    # Fortschritt & Notizen
+    baufortschritt = Column(Integer)
+    bemerkungen = Column(Text)
+    # Altlast (v0.2) — bleibt für Bestandsdaten erhalten
     beschreibung = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

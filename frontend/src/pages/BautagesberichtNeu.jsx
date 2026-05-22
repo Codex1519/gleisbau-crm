@@ -8,12 +8,32 @@ import { Alert } from '../components/Alert'
 import { Sektion } from '../components/Sektion'
 import { LadeBlock, Spinner } from '../components/Spinner'
 import { IconArrowLeft, IconPlus } from '../components/Icons'
+import {
+  BautagesberichtFormFelder,
+  bautagesberichtPayload,
+} from '../components/BautagesberichtFormFelder'
+import { heuteISO } from '../lib/zeiterfassung'
+
+const LEER = {
+  projekt_id: '',
+  ersteller_id: '',
+  datum: '',
+  wetter: '',
+  temperatur: '',
+  arbeiten_durchgefuehrt: '',
+  personal_anwesend: '',
+  maschinen_eingesetzt: '',
+  materiallieferungen: '',
+  behinderungen: '',
+  besondere_vorkommnisse: '',
+  baufortschritt: '0',
+  bemerkungen: '',
+}
 
 export function BautagesberichtNeu() {
   const navigate = useNavigate()
   const toast = useToast()
   const [searchParams] = useSearchParams()
-  const personalModul = findModul('personal')
   const projekteModul = findModul('projekte')
 
   const lockedProjekt = searchParams.get('projekt_id') || ''
@@ -25,11 +45,9 @@ export function BautagesberichtNeu() {
   const [speichere, setSpeichere] = useState(false)
 
   const [form, setForm] = useState({
+    ...LEER,
     projekt_id: lockedProjekt,
-    personal_id: '',
-    datum: '',
-    wetter: '',
-    beschreibung: '',
+    datum: heuteISO(),
   })
 
   useEffect(() => {
@@ -45,24 +63,18 @@ export function BautagesberichtNeu() {
   const keinPersonal = personal.length === 0
   const keineProjekte = projekte.length === 0
 
+  function set(feld, wert) {
+    setForm((f) => ({ ...f, [feld]: wert }))
+  }
+
   async function absenden(e) {
     e.preventDefault()
     setFehler(null)
     setSpeichere(true)
     try {
-      // Payload-Bereinigung wie überall: leere optionale Strings raus,
-      // Datums-Pflichtfelder bleiben befüllt.
-      const payload = {
-        projekt_id: Number(form.projekt_id),
-        personal_id: Number(form.personal_id),
-        datum: form.datum,
-      }
-      if (form.wetter) payload.wetter = form.wetter
-      if (form.beschreibung) payload.beschreibung = form.beschreibung
-
+      const payload = bautagesberichtPayload(form)
       await api.create('bautagesberichte', payload)
       toast.erfolg('Bautagesbericht erfolgreich angelegt')
-
       if (lockedProjekt) navigate(`/projekte/${lockedProjekt}`)
       else navigate('/bautagesberichte')
     } catch (err) {
@@ -97,6 +109,17 @@ export function BautagesberichtNeu() {
     ? `/projekte/${lockedProjekt}`
     : '/bautagesberichte'
 
+  if (lade) {
+    return (
+      <div className="content">
+        <Breadcrumb items={breadcrumb} />
+        <Sektion>
+          <LadeBlock text="Lade Optionen…" />
+        </Sektion>
+      </div>
+    )
+  }
+
   return (
     <div className="content">
       <Breadcrumb items={breadcrumb} />
@@ -107,7 +130,7 @@ export function BautagesberichtNeu() {
           <div className="subtitel">
             {lockedProjektName
               ? `Projekt: ${lockedProjektName}`
-              : 'Tageseinsatz auf einem Projekt erfassen'}
+              : 'Tageseinsatz auf einem Projekt dokumentieren'}
           </div>
         </div>
         <div className="aktionen">
@@ -118,11 +141,9 @@ export function BautagesberichtNeu() {
         </div>
       </div>
 
-      {fehler && (
-        <Alert titel="Speichern fehlgeschlagen">{fehler}</Alert>
-      )}
+      {fehler && <Alert titel="Speichern fehlgeschlagen">{fehler}</Alert>}
 
-      {!lade && (keinPersonal || keineProjekte) && (
+      {(keinPersonal || keineProjekte) && (
         <Alert typ="info" titel="Hinweis">
           Bevor du einen Bautagesbericht anlegst, benötigst du mindestens{' '}
           {keinPersonal && <Link to="/personal/neu">einen Mitarbeiter</Link>}
@@ -132,122 +153,30 @@ export function BautagesberichtNeu() {
         </Alert>
       )}
 
-      <Sektion titel="Angaben">
-        {lade ? (
-          <LadeBlock text="Lade Optionen…" />
-        ) : (
-          <form onSubmit={absenden}>
-            <div className="felder">
-              <label className="feld">
-                <span className="feld-label">
-                  Projekt
-                  <span className="feld-required" aria-hidden="true">*</span>
-                </span>
-                <select
-                  required
-                  value={form.projekt_id}
-                  disabled={!!lockedProjekt || keineProjekte || speichere}
-                  onChange={(e) =>
-                    setForm({ ...form, projekt_id: e.target.value })
-                  }
-                >
-                  <option value="" disabled>
-                    {keineProjekte
-                      ? 'Keine Projekte vorhanden'
-                      : 'Bitte auswählen…'}
-                  </option>
-                  {projekte.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {projekteModul.displayName(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+      <form onSubmit={absenden}>
+        <BautagesberichtFormFelder
+          form={form}
+          set={set}
+          personal={personal}
+          projekte={projekte}
+          speichere={speichere}
+          lockProjekt={!!lockedProjekt}
+        />
 
-              <label className="feld">
-                <span className="feld-label">
-                  Ersteller
-                  <span className="feld-required" aria-hidden="true">*</span>
-                </span>
-                <select
-                  required
-                  value={form.personal_id}
-                  disabled={keinPersonal || speichere}
-                  onChange={(e) =>
-                    setForm({ ...form, personal_id: e.target.value })
-                  }
-                >
-                  <option value="" disabled>
-                    {keinPersonal
-                      ? 'Keine Mitarbeiter vorhanden'
-                      : 'Bitte auswählen…'}
-                  </option>
-                  {personal.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {personalModul.displayName(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="feld">
-                <span className="feld-label">
-                  Datum
-                  <span className="feld-required" aria-hidden="true">*</span>
-                </span>
-                <input
-                  type="date"
-                  required
-                  value={form.datum}
-                  disabled={speichere}
-                  onChange={(e) =>
-                    setForm({ ...form, datum: e.target.value })
-                  }
-                />
-              </label>
-
-              <label className="feld">
-                <span className="feld-label">Wetter</span>
-                <input
-                  type="text"
-                  placeholder="z. B. sonnig, 18 °C"
-                  value={form.wetter}
-                  disabled={speichere}
-                  onChange={(e) =>
-                    setForm({ ...form, wetter: e.target.value })
-                  }
-                />
-              </label>
-
-              <label className="feld feld-wide">
-                <span className="feld-label">Kurzbeschreibung</span>
-                <textarea
-                  value={form.beschreibung}
-                  disabled={speichere}
-                  placeholder="Was wurde an diesem Tag erledigt?"
-                  onChange={(e) =>
-                    setForm({ ...form, beschreibung: e.target.value })
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="form-actions">
-              <Link to={zurueckLink} className="btn btn-ghost">
-                Abbrechen
-              </Link>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={speichere || keinPersonal || keineProjekte}
-              >
-                {speichere ? <Spinner /> : <IconPlus />}
-                {speichere ? 'Speichert…' : 'Bautagesbericht anlegen'}
-              </button>
-            </div>
-          </form>
-        )}
-      </Sektion>
+        <div className="form-actions" style={{ border: 'none', paddingTop: 0 }}>
+          <Link to={zurueckLink} className="btn btn-ghost">
+            Abbrechen
+          </Link>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={speichere || keinPersonal || keineProjekte}
+          >
+            {speichere ? <Spinner /> : <IconPlus />}
+            {speichere ? 'Speichert…' : 'Bautagesbericht anlegen'}
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

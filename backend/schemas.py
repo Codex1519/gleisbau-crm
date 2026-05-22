@@ -189,15 +189,31 @@ class DokumentUpdate(BaseModel):
 # ---------- Bautagesberichte ----------
 class BautagesberichtCreate(BaseModel):
     projekt_id: int
-    personal_id: int
+    ersteller_id: int
     datum: date
     wetter: str | None = None
-    beschreibung: str | None = None
+    temperatur: int | None = None
+    arbeiten_durchgefuehrt: str | None = None
+    personal_anwesend: str | None = None
+    maschinen_eingesetzt: str | None = None
+    materiallieferungen: str | None = None
+    behinderungen: str | None = None
+    besondere_vorkommnisse: str | None = None
+    baufortschritt: int | None = None
+    bemerkungen: str | None = None
 
 
 class BautagesberichtUpdate(BaseModel):
     projekt_id: int | None = None
-    personal_id: int | None = None
+    ersteller_id: int | None = None
     datum: date | None = None
     wetter: str | None = None
-    beschreibung: str | None = None
+    temperatur: int | None = None
+    arbeiten_durchgefuehrt: str | None = None
+    personal_anwesend: str | None = None
+    maschinen_eingesetzt: str | None = None
+    materiallieferungen: str | None = None
+    behinderungen: str | None = None
+    besondere_vorkommnisse: str | None = None
+    baufortschritt: int | None = None
+    bemerkungen: str | None = None

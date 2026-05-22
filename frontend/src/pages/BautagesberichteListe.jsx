@@ -8,6 +8,12 @@ import { EmptyState } from '../components/EmptyState'
 import { LadeBlock } from '../components/Spinner'
 import { Sektion } from '../components/Sektion'
 import { IconPlus, IconRefresh } from '../components/Icons'
+import {
+  wetterIcon,
+  fortschrittFarbe,
+  erstellerId,
+  hatInhalt,
+} from '../lib/bautagesbericht'
 
 export function BautagesberichteListe() {
   const navigate = useNavigate()
@@ -20,6 +26,8 @@ export function BautagesberichteListe() {
   const [lade, setLade] = useState(true)
   const [fehler, setFehler] = useState(null)
   const [filterProjekt, setFilterProjekt] = useState('')
+  const [von, setVon] = useState('')
+  const [bis, setBis] = useState('')
 
   useEffect(() => {
     laden()
@@ -56,15 +64,16 @@ export function BautagesberichteListe() {
   const gefiltert = useMemo(() => {
     let liste = berichte
     if (filterProjekt) {
-      liste = liste.filter(
-        (b) => b.projekt_id === Number(filterProjekt)
-      )
+      liste = liste.filter((b) => b.projekt_id === Number(filterProjekt))
     }
-    // Neueste zuerst
+    if (von) liste = liste.filter((b) => b.datum && b.datum >= von)
+    if (bis) liste = liste.filter((b) => b.datum && b.datum <= bis)
     return [...liste].sort((a, b) =>
       String(b.datum || '').localeCompare(String(a.datum || ''))
     )
-  }, [berichte, filterProjekt])
+  }, [berichte, filterProjekt, von, bis])
+
+  const istGefiltert = filterProjekt !== '' || von !== '' || bis !== ''
 
   return (
     <div className="content">
@@ -77,9 +86,7 @@ export function BautagesberichteListe() {
           <h1>
             Bautagesberichte <span className="badge">{berichte.length}</span>
           </h1>
-          <div className="subtitel">
-            Tageseinsätze aller Projekte
-          </div>
+          <div className="subtitel">Tageseinsätze aller Projekte</div>
         </div>
         <div className="aktionen">
           <button
@@ -105,8 +112,7 @@ export function BautagesberichteListe() {
           <div
             className="felder"
             style={{
-              gridTemplateColumns: '1fr auto',
-              alignItems: 'end',
+              gridTemplateColumns: '2fr 1fr 1fr',
               marginBottom: 0,
             }}
           >
@@ -125,23 +131,52 @@ export function BautagesberichteListe() {
                 ))}
               </select>
             </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 4 }}>
-              {filterProjekt && (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setFilterProjekt('')}
-                >
-                  Filter zurücksetzen
-                </button>
-              )}
-              {filterProjekt && (
-                <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
-                  {gefiltert.length} von {berichte.length} Einträgen
-                </span>
-              )}
-            </div>
+            <label className="feld">
+              <span className="feld-label">Von</span>
+              <input
+                type="date"
+                value={von}
+                max={bis || undefined}
+                onChange={(e) => setVon(e.target.value)}
+              />
+            </label>
+            <label className="feld">
+              <span className="feld-label">Bis</span>
+              <input
+                type="date"
+                value={bis}
+                min={von || undefined}
+                onChange={(e) => setBis(e.target.value)}
+              />
+            </label>
           </div>
+          {istGefiltert && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                marginTop: 14,
+                paddingTop: 14,
+                borderTop: '1px solid var(--border)',
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setFilterProjekt('')
+                  setVon('')
+                  setBis('')
+                }}
+              >
+                Filter zurücksetzen
+              </button>
+              <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+                {gefiltert.length} von {berichte.length} Einträgen
+              </span>
+            </div>
+          )}
         </Sektion>
       )}
 
@@ -162,46 +197,76 @@ export function BautagesberichteListe() {
         ) : gefiltert.length === 0 ? (
           <EmptyState
             titel="Keine Treffer"
-            text="Mit dem gewählten Filter sind keine Einträge sichtbar."
+            text="Mit den gewählten Filtern sind keine Einträge sichtbar."
           />
         ) : (
           <div className="tabelle-wrap">
             <table>
               <thead>
                 <tr>
-                  <th className="col-id">ID</th>
                   <th>Datum</th>
                   <th>Projekt</th>
                   <th>Ersteller</th>
                   <th>Wetter</th>
+                  <th>Fortschritt</th>
+                  <th>Vorschau</th>
                 </tr>
               </thead>
               <tbody>
                 {gefiltert.map((b) => {
                   const proj = projekteMap.get(b.projekt_id)
-                  const pers = personalMap.get(b.personal_id)
+                  const pers = personalMap.get(erstellerId(b))
+                  const pct = Number(b.baufortschritt) || 0
+                  const vorschau =
+                    b.arbeiten_durchgefuehrt || b.bemerkungen || ''
                   return (
                     <tr
                       key={b.id}
                       className="zeile-klickbar"
-                      onClick={() =>
-                        navigate(`/bautagesberichte/${b.id}`)
-                      }
+                      onClick={() => navigate(`/bautagesberichte/${b.id}`)}
                     >
-                      <td className="col-id">#{b.id}</td>
                       <td className="primary-cell">{b.datum || '—'}</td>
                       <td className="muted-cell">
-                        {proj ? projekteModul.displayName(proj) : `#${b.projekt_id}`}
+                        {proj
+                          ? projekteModul.displayName(proj)
+                          : `#${b.projekt_id}`}
                       </td>
                       <td className="muted-cell">
-                        {pers ? personalModul.displayName(pers) : `#${b.personal_id}`}
+                        {pers ? personalModul.displayName(pers) : '—'}
+                      </td>
+                      <td>
+                        {hatInhalt(b.wetter) ? (
+                          <span className="wetter-badge">
+                            <span className="ico">{wetterIcon(b.wetter)}</span>
+                            {b.wetter}
+                          </span>
+                        ) : (
+                          <span className="value-empty">—</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="fortschritt-mini">
+                          <div className="bar">
+                            <div
+                              className={`fortschritt-fill farbe-${fortschrittFarbe(
+                                pct
+                              )}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="pct">{pct}%</span>
+                        </div>
                       </td>
                       <td
-                        className={
-                          b.wetter ? 'muted-cell' : 'empty'
-                        }
+                        className={vorschau ? 'muted-cell' : 'empty'}
+                        style={{
+                          maxWidth: 280,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
                       >
-                        {b.wetter || '—'}
+                        {vorschau || '—'}
                       </td>
                     </tr>
                   )

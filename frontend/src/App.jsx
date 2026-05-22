@@ -15,6 +15,7 @@ import { ZeiterfassungenListe } from './pages/ZeiterfassungenListe'
 import { ZeiterfassungNeu } from './pages/ZeiterfassungNeu'
 import { BautagesberichteListe } from './pages/BautagesberichteListe'
 import { BautagesberichtNeu } from './pages/BautagesberichtNeu'
+import { BautagesberichtDetail } from './pages/BautagesberichtDetail'
 import { ProjekteListe } from './pages/ProjekteListe'
 import './App.css'
 
@@ -23,6 +24,7 @@ const CUSTOM_DETAIL = {
   kunden: KundeDetail,
   personal: PersonalDetail,
   projekte: ProjektDetail,
+  bautagesberichte: BautagesberichtDetail,
 }
 
 // Module mit komplett eigener Listenansicht (statt generischer ListPage).
