@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { MODULE } from './modules'
 import { Layout } from './components/Layout'
 import { ToastProvider } from './contexts/ToastContext'
+import { SearchProvider } from './contexts/SearchContext'
 import { Dashboard } from './pages/Dashboard'
 import { ListPage } from './pages/ListPage'
 import { FormPage } from './pages/FormPage'
@@ -43,7 +44,8 @@ const KEINE_DETAIL_ROUTE = new Set(['zeiterfassungen'])
 export default function App() {
   return (
     <ToastProvider>
-      <Routes>
+      <SearchProvider>
+        <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
 
@@ -84,7 +86,8 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-      </Routes>
+        </Routes>
+      </SearchProvider>
     </ToastProvider>
   )
 }

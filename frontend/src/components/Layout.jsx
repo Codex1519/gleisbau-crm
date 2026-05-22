@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { MODULE } from '../modules'
 import { ModulIcon, IconHome } from './Icons'
+import { GlobalSearch } from './GlobalSearch'
 
 export function Layout() {
   return (
@@ -55,6 +56,9 @@ export function Layout() {
       </aside>
 
       <main className="main">
+        <header className="topbar">
+          <GlobalSearch />
+        </header>
         <Outlet />
       </main>
     </div>
