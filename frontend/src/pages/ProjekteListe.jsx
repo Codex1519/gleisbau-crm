@@ -122,8 +122,13 @@ export function ProjekteListe() {
             Aufträge, Budget und Status — alles auf einen Blick
           </div>
         </div>
-        <div className="aktionen">
+      </div>
+
+      <div className="aktions-toolbar">
+        <div className="at-gruppe">
           <ViewToggle view={view} onChange={wechselView} />
+        </div>
+        <div className="at-gruppe at-sekundaer">
           <button
             type="button"
             className="btn btn-secondary"
@@ -134,6 +139,8 @@ export function ProjekteListe() {
             <IconRefresh />
             Aktualisieren
           </button>
+        </div>
+        <div className="at-gruppe at-primaer">
           <Link to="/projekte/neu" className="btn btn-primary">
             <IconPlus />
             Neues Projekt anlegen

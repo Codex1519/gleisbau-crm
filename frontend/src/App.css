@@ -281,6 +281,43 @@ main.main {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   Aktions-Toolbar (gruppierte Button-Reihe)
+   Toggle links · sekundäre Aktionen mittig · primärer Button rechts
+   ============================================ */
+.aktions-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.at-gruppe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* sekundäre Aktionen: Trennlinie zur Toggle-Gruppe */
+.at-sekundaer {
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+}
+/* primärer Button wird ganz nach rechts geschoben */
+.at-primaer {
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .at-sekundaer {
+    padding-left: 0;
+    border-left: none;
+  }
+  .at-primaer {
+    margin-left: 0;
+  }
 }
 
 .badge {
@@ -1107,6 +1144,7 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   z-index: 50;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   padding: 10px 28px;
   background: rgba(255, 255, 255, 0.85);
@@ -1119,6 +1157,8 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   position: relative;
   width: 100%;
   max-width: 460px;
+  /* Mittig in der Topbar – gleicher Abstand links und rechts */
+  margin: 0 auto;
 }
 
 .gs-mobil-toggle {

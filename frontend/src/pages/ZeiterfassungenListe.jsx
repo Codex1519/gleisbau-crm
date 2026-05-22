@@ -186,8 +186,13 @@ export function ZeiterfassungenListe() {
             Stundenzettel aller Mitarbeiter und Projekte
           </div>
         </div>
-        <div className="aktionen">
+      </div>
+
+      <div className="aktions-toolbar">
+        <div className="at-gruppe">
           <ViewToggle view={view} onChange={setView} />
+        </div>
+        <div className="at-gruppe at-sekundaer">
           <button
             type="button"
             className="btn btn-secondary"
@@ -217,6 +222,8 @@ export function ZeiterfassungenListe() {
             <IconRefresh />
             Aktualisieren
           </button>
+        </div>
+        <div className="at-gruppe at-primaer">
           <Link to="/zeiterfassungen/neu" className="btn btn-primary">
             <IconPlus />
             Neue Zeiterfassung
