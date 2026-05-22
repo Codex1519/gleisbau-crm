@@ -274,43 +274,6 @@ function ViewToggle({ view, onChange }) {
         </svg>
         Kanban
       </button>
-
-      <style>{`
-        .view-toggle {
-          display: inline-flex;
-          background: var(--bg-surface);
-          border: 1px solid var(--border-strong);
-          border-radius: var(--r-md);
-          padding: 2px;
-          gap: 2px;
-        }
-        .view-toggle-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 10px;
-          background: transparent;
-          color: var(--text-secondary);
-          border: none;
-          border-radius: 4px;
-          font-size: 13px;
-          font-weight: 500;
-          font-family: inherit;
-          cursor: pointer;
-          transition: background 120ms ease, color 120ms ease;
-        }
-        .view-toggle-btn:hover {
-          background: var(--bg-muted);
-          color: var(--text);
-        }
-        .view-toggle-btn.aktiv {
-          background: var(--accent-soft);
-          color: var(--accent);
-        }
-        .view-toggle-btn svg {
-          opacity: 0.9;
-        }
-      `}</style>
     </div>
   )
 }

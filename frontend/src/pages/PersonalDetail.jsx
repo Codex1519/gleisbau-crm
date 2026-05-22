@@ -11,10 +11,19 @@ import { ConfirmDialog } from '../components/Modal'
 import { EntityFelder } from '../components/EntityFelder'
 import { RelatedList } from '../components/RelatedList'
 import { Stundenzettel } from '../components/Stundenzettel'
+import { ZeiterfassungEditModal } from '../components/ZeiterfassungEditModal'
 import {
   bereiteFormDatenAuf,
   entityZuForm,
 } from '../components/FormField'
+import {
+  berechneGesamtMinuten,
+  formatStunden,
+  formatDatum,
+  formatZeit,
+  heuteISO,
+  exportiereCsv,
+} from '../lib/zeiterfassung'
 import {
   IconArrowLeft,
   IconTrash,
@@ -44,6 +53,10 @@ export function PersonalDetail() {
   const [form, setForm] = useState({})
   const [speichere, setSpeichere] = useState(false)
 
+  // Inline-Edit einer einzelnen Zeiterfassung (Modal)
+  const [editZeit, setEditZeit] = useState(null)
+  const [alleProjekte, setAlleProjekte] = useState([])
+
   useEffect(() => {
     setLade(true)
     setFehler(null)
@@ -62,6 +75,7 @@ export function PersonalDetail() {
         setNotfallkontakte(n.filter((x) => x.personal_id === pid))
         setZeiten(z.filter((x) => x.personal_id === pid))
         setProjekte(proj)
+        setAlleProjekte(proj)
       })
       .catch((e) => setFehler(e.message))
       .finally(() => setLade(false))
@@ -111,6 +125,54 @@ export function PersonalDetail() {
     () => new Map(projekte.map((p) => [p.id, p])),
     [projekte]
   )
+
+  const zeitenGesamtMinuten = useMemo(
+    () => berechneGesamtMinuten(zeiten),
+    [zeiten]
+  )
+
+  function handleZeitGespeichert(aktualisiert) {
+    setZeiten((alle) =>
+      alle.map((z) =>
+        z.id === aktualisiert.id ? { ...z, ...aktualisiert } : z
+      )
+    )
+    setEditZeit(null)
+    toast.erfolg('Zeiterfassung aktualisiert')
+  }
+
+  function exportZeitenCsv() {
+    const header = [
+      'Datum',
+      'Mitarbeiter',
+      'Projekt',
+      'Start',
+      'Ende',
+      'Pause (Min)',
+      'Gesamtstunden',
+    ]
+    const name = person ? modul.displayName(person) : `#${id}`
+    const rows = [...zeiten]
+      .sort((a, b) =>
+        String(a.start_zeit || '').localeCompare(String(b.start_zeit || ''))
+      )
+      .map((z) => {
+        const pr = projektMap.get(z.projekt_id)
+        return [
+          formatDatum(z.start_zeit),
+          name,
+          pr ? findModul('projekte').displayName(pr) : `#${z.projekt_id}`,
+          formatZeit(z.start_zeit),
+          formatZeit(z.end_zeit),
+          Number(z.pause_minuten || 0),
+          formatStunden(berechneGesamtMinuten([z])),
+        ]
+      })
+    const dateiname = `zeiterfassungen_${name
+      .replace(/\s+/g, '_')
+      .toLowerCase()}_${heuteISO()}.csv`
+    exportiereCsv(dateiname, [header, ...rows])
+  }
 
   const titel = person ? modul.displayName(person) : `#${id}`
 
@@ -263,23 +325,77 @@ export function PersonalDetail() {
                 titel="Zeiterfassungen"
                 count={zeiten.length}
                 aktionen={
-                  <Link
-                    to={`/zeiterfassungen/neu?personal_id=${person.id}`}
-                    className="btn btn-secondary"
-                  >
-                    <IconPlus />
-                    Neu
-                  </Link>
+                  <>
+                    {zeiten.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={exportZeitenCsv}
+                        title="Zeiten dieses Mitarbeiters als CSV"
+                      >
+                        Export CSV
+                      </button>
+                    )}
+                    <Link
+                      to={`/zeiterfassungen/neu?personal_id=${person.id}`}
+                      className="btn btn-secondary"
+                    >
+                      <IconPlus />
+                      Neu
+                    </Link>
+                  </>
                 }
                 tight
               >
+                {zeiten.length > 0 && (
+                  <div className="ze-summary">
+                    <div className="ze-summary-label">Gesamtstunden</div>
+                    <div className="ze-summary-wert">
+                      {formatStunden(zeitenGesamtMinuten)} h
+                    </div>
+                    <div className="ze-summary-sub">
+                      aus {zeiten.length} Eintrag
+                      {zeiten.length === 1 ? '' : 'en'}
+                    </div>
+                  </div>
+                )}
                 <Stundenzettel
                   zeiten={zeiten}
                   variant="personal"
                   projekteMap={projektMap}
+                  markiereUeberstunden
+                  onEdit={(z) => setEditZeit(z)}
                   leerTitel="Keine Zeiten erfasst"
                   leerText='Über „+ Neu" oben kannst du eine erste Arbeitszeit erfassen.'
                 />
+                <style>{`
+                  .ze-summary {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 10px;
+                    padding: 14px 18px;
+                    border-bottom: 1px solid var(--border);
+                    background: var(--accent-soft);
+                  }
+                  .ze-summary-label {
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    font-weight: 600;
+                    color: var(--accent-text);
+                  }
+                  .ze-summary-wert {
+                    font-size: 22px;
+                    font-weight: 600;
+                    color: var(--accent);
+                    font-variant-numeric: tabular-nums;
+                    letter-spacing: -0.02em;
+                  }
+                  .ze-summary-sub {
+                    font-size: 12.5px;
+                    color: var(--accent-text);
+                  }
+                `}</style>
               </Sektion>
             </>
           )}
@@ -294,6 +410,14 @@ export function PersonalDetail() {
         gefaehrlich
         onConfirm={loeschenBestaetigt}
         onCancel={() => !loesche && setConfirmOffen(false)}
+      />
+
+      <ZeiterfassungEditModal
+        eintrag={editZeit}
+        personal={person ? [person] : []}
+        projekte={alleProjekte}
+        onClose={() => setEditZeit(null)}
+        onGespeichert={handleZeitGespeichert}
       />
     </div>
   )
