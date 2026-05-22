@@ -52,7 +52,7 @@ export function Layout() {
           </ul>
         </nav>
 
-        <div className="sidebar-footer">v0.1 · API localhost:8000</div>
+        <div className="sidebar-footer">v0.5 · API localhost:8000</div>
       </aside>
 
       <main className="main">

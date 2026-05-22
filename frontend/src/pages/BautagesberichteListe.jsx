@@ -214,8 +214,8 @@ export function BautagesberichteListe() {
               </thead>
               <tbody>
                 {gefiltert.map((b) => {
-                  const proj = projekteMap.get(b.projekt_id)
-                  const pers = personalMap.get(erstellerId(b))
+                  const proj = projekteMap.get(Number(b.projekt_id))
+                  const pers = personalMap.get(Number(erstellerId(b)))
                   const pct = Number(b.baufortschritt) || 0
                   const vorschau =
                     b.arbeiten_durchgefuehrt || b.bemerkungen || ''
