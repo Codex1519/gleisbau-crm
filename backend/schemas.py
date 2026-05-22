@@ -105,7 +105,7 @@ class ProjektUpdate(BaseModel):
 class AnsprechpartnerCreate(BaseModel):
     kunden_id: int
     nachname: str
-    vorname: str
+    vorname: str | None = None
     telefon: str | None = None
     email: str | None = None
     position: str | None = None
