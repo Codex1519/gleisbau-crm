@@ -24,11 +24,11 @@ import {
 } from '../components/Icons'
 import { LoeschenButton } from '../components/LoeschenButton'
 import {
-  wetterIcon,
   fortschrittFarbe,
   erstellerId,
   hatInhalt,
 } from '../lib/bautagesbericht'
+import { WetterSymbol } from '../components/Icons'
 
 export function ProjektDetail() {
   const { id } = useParams()
@@ -301,9 +301,7 @@ export function ProjektDetail() {
                             <div className="timeline-kopf">
                               <span className="timeline-datum">
                                 {hatInhalt(b.wetter) && (
-                                  <span style={{ marginRight: 6 }}>
-                                    {wetterIcon(b.wetter)}
-                                  </span>
+                                  <span className="timeline-wetter"><WetterSymbol wert={b.wetter} /></span>
                                 )}
                                 {b.datum || `#${b.id}`}
                               </span>

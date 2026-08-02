@@ -9,11 +9,11 @@ import { LadeBlock } from '../components/Spinner'
 import { Sektion } from '../components/Sektion'
 import { IconPlus, IconRefresh } from '../components/Icons'
 import {
-  wetterIcon,
   fortschrittFarbe,
   erstellerId,
   hatInhalt,
 } from '../lib/bautagesbericht'
+import { WetterSymbol } from '../components/Icons'
 
 export function BautagesberichteListe() {
   const navigate = useNavigate()
@@ -237,7 +237,7 @@ export function BautagesberichteListe() {
                       <td>
                         {hatInhalt(b.wetter) ? (
                           <span className="wetter-badge">
-                            <span className="ico">{wetterIcon(b.wetter)}</span>
+                            <WetterSymbol wert={b.wetter} />
                             {b.wetter}
                           </span>
                         ) : (

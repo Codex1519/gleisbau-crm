@@ -137,7 +137,7 @@ export function BautagesberichtFormFelder({
               <option value="">— keine Angabe —</option>
               {WETTER_OPTIONEN.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.icon} {o.label}
+                  {o.label}
                 </option>
               ))}
             </select>

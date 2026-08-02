@@ -9,6 +9,15 @@ import { SignaturFeld } from '../components/SignaturFeld'
 import { WETTER_OPTIONEN } from '../lib/bautagesbericht'
 import { formatStunden, heuteISO } from '../lib/zeiterfassung'
 import { Spinner } from '../components/Spinner'
+import {
+  WetterSymbol,
+  IconSchloss,
+  IconOffline,
+  IconAusweis,
+  IconBarriere,
+  IconCheckKreis,
+  IconHelm,
+} from '../components/Icons'
 
 // Feld-Formular: Bautagesbericht von der Baustelle, Zasta-Stil.
 // Zugang über persönliches Login (Rolle "feld") — der Ersteller steht
@@ -347,7 +356,7 @@ export function Melden() {
     return (
       <MeldenRahmen>
         <form className="melden-login" onSubmit={einloggen}>
-          <div className="melden-emoji">👷</div>
+          <div className="melden-emoji"><IconHelm /></div>
           <h1>Bautagesbericht</h1>
           <p>Melde dich einmal an — dein Handy bleibt angemeldet.</p>
           {loginFehler && <div className="melden-fehler">{loginFehler}</div>}
@@ -387,7 +396,7 @@ export function Melden() {
     return (
       <MeldenRahmen>
         <div className="melden-zentriert">
-          <div className="melden-emoji">📡</div>
+          <div className="melden-emoji"><IconOffline /></div>
           <h1>Keine Verbindung</h1>
           <p>Der Server ist gerade nicht erreichbar. Später erneut öffnen.</p>
           <button
@@ -416,7 +425,7 @@ export function Melden() {
     return (
       <MeldenRahmen>
         <div className="melden-zentriert">
-          <div className="melden-emoji">🪪</div>
+          <div className="melden-emoji"><IconAusweis /></div>
           <h1>Konto nicht zugeordnet</h1>
           <p>
             Dein Konto „{benutzer.benutzername}" ist keinem Mitarbeiter
@@ -433,7 +442,7 @@ export function Melden() {
     return (
       <MeldenRahmen>
         <div className="melden-zentriert">
-          <div className="melden-emoji">🚧</div>
+          <div className="melden-emoji"><IconBarriere /></div>
           <h1>Keine Berechtigung</h1>
           <p>
             Berichte dürfen nur Polier, Vorarbeiter, Facharbeiter und
@@ -452,7 +461,7 @@ export function Melden() {
     return (
       <MeldenRahmen>
         <div className="melden-zentriert">
-          <div className="melden-emoji">✅</div>
+          <div className="melden-emoji melden-emoji-ok"><IconCheckKreis /></div>
           <h1>Bericht gesendet!</h1>
           <p>Dein Bautagesbericht ist im Büro angekommen. Danke!</p>
           <button
@@ -541,7 +550,7 @@ export function Melden() {
                     set('wetter', a.wetter === w.value ? '' : w.value)
                   }
                 >
-                  <span className="ico">{w.icon}</span>
+                  <WetterSymbol wert={w.value} className="ico-svg" />
                   <span>{w.label}</span>
                 </button>
               ))}
@@ -783,7 +792,7 @@ export function Melden() {
                   setTimeout(() => setSchritt((s) => s + 1), 200)
                 }}
               >
-                Nein, alles gut ✌️
+                Nein, alles gut
               </button>
               <button
                 type="button"
@@ -1011,7 +1020,7 @@ export function Melden() {
 
       <div className="melden-benutzer">
         <span>
-          👷 Angemeldet: <strong>{ichName}</strong>
+          <IconHelm className="icon helm-klein" /> Angemeldet:{' '}<strong>{ichName}</strong>
         </span>
         <button type="button" onClick={abmelden}>
           Abmelden
@@ -1026,7 +1035,7 @@ export function Melden() {
         {inhalt()}
         {schritt === 0 && (
           <p className="melden-tipp">
-            💡 Tipp: Speichere diese Seite über das Browser-Menü auf deinem
+            Tipp: Speichere diese Seite über das Browser-Menü auf deinem
             Startbildschirm — dann ist sie immer nur einen Tipp entfernt.
           </p>
         )}

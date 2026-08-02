@@ -1,19 +1,16 @@
-// Wetter-Optionen für Bautagesberichte (Dropdown + Icon-Anzeige).
-// Emojis sind hier bewusst gewünscht (Icon + Text laut Anforderung).
+// Wetter-Optionen für Bautagesberichte.
+// Die Icons sind eigene SVGs (WetterSymbol in components/Icons.jsx) —
+// Emojis rendern auf jedem Gerät anders und wirken unprofessionell.
 export const WETTER_OPTIONEN = [
-  { value: 'Sonnig', label: 'Sonnig', icon: '☀️' },
-  { value: 'Bewölkt', label: 'Bewölkt', icon: '☁️' },
-  { value: 'Leichter Regen', label: 'Leichter Regen', icon: '🌦️' },
-  { value: 'Starkregen', label: 'Starkregen', icon: '🌧️' },
-  { value: 'Frost', label: 'Frost', icon: '❄️' },
-  { value: 'Schnee', label: 'Schnee', icon: '🌨️' },
-  { value: 'Sturm', label: 'Sturm', icon: '💨' },
-  { value: 'Nebel', label: 'Nebel', icon: '🌫️' },
+  { value: 'Sonnig', label: 'Sonnig' },
+  { value: 'Bewölkt', label: 'Bewölkt' },
+  { value: 'Leichter Regen', label: 'Leichter Regen' },
+  { value: 'Starkregen', label: 'Starkregen' },
+  { value: 'Frost', label: 'Frost' },
+  { value: 'Schnee', label: 'Schnee' },
+  { value: 'Sturm', label: 'Sturm' },
+  { value: 'Nebel', label: 'Nebel' },
 ]
-
-export function wetterIcon(value) {
-  return WETTER_OPTIONEN.find((o) => o.value === value)?.icon || '🌡️'
-}
 
 // Ampel-Farbe (CSS-Klassen-Suffix) für einen Baufortschritt-Wert.
 export function fortschrittFarbe(prozent) {

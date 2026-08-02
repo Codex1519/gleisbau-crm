@@ -2661,3 +2661,39 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   cursor: pointer;
   padding: 4px;
 }
+
+/* ---------- SVG-Icons statt Emojis ---------- */
+.melden-emoji svg {
+  width: 64px;
+  height: 64px;
+  color: var(--accent);
+}
+.melden-emoji.melden-emoji-ok svg {
+  color: var(--success);
+}
+.melden-wetter-tile .ico-svg {
+  width: 28px;
+  height: 28px;
+}
+.melden-benutzer .helm-klein {
+  width: 15px;
+  height: 15px;
+  vertical-align: -3px;
+  margin-right: 2px;
+}
+.wetter-badge svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.dok-wetter-gross svg {
+  width: 26px;
+  height: 26px;
+  vertical-align: -6px;
+}
+.timeline-wetter svg {
+  width: 15px;
+  height: 15px;
+  vertical-align: -3px;
+  margin-right: 4px;
+}

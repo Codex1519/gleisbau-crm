@@ -194,6 +194,128 @@ export const IconInbox = (p) => (
   </Svg>
 )
 
+/* ---------- Wetter (eigener Stroke-Stil, ersetzt Emojis) ---------- */
+const W = { viewBox: '0 0 24 24' }
+const wolke = 'M6.5 15a3.5 3.5 0 0 1-.4-6.98A5.5 5.5 0 0 1 16.9 7.2 4 4 0 0 1 16 15H6.5Z'
+
+export const WetterSonnig = (p) => (
+  <Svg {...W} {...p}>
+    <circle {...stroke} cx="12" cy="12" r="4" />
+    <path
+      {...stroke}
+      d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"
+    />
+  </Svg>
+)
+export const WetterBewoelkt = (p) => (
+  <Svg {...W} {...p}>
+    <path
+      {...stroke}
+      d="M6.5 17a3.5 3.5 0 0 1-.4-6.98A5.5 5.5 0 0 1 16.9 9.2 4 4 0 0 1 16 17H6.5Z"
+    />
+  </Svg>
+)
+export const WetterLeichterRegen = (p) => (
+  <Svg {...W} {...p}>
+    <path {...stroke} d={wolke} />
+    <path {...stroke} d="M9 18v1.5M13 18v1.5" />
+  </Svg>
+)
+export const WetterStarkregen = (p) => (
+  <Svg {...W} {...p}>
+    <path {...stroke} d={wolke} />
+    <path {...stroke} d="M8 17.5 7 21M12 17.5 11 21M16 17.5 15 21" />
+  </Svg>
+)
+export const WetterFrost = (p) => (
+  <Svg {...W} {...p}>
+    <path
+      {...stroke}
+      d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M12 3l-2 2M12 3l2 2M12 21l-2-2M12 21l2-2"
+    />
+  </Svg>
+)
+export const WetterSchnee = (p) => (
+  <Svg {...W} {...p}>
+    <path {...stroke} d={wolke} />
+    <path {...stroke} d="M8 18h.01M12 19.5h.01M16 18h.01" strokeWidth="2.4" />
+  </Svg>
+)
+export const WetterSturm = (p) => (
+  <Svg {...W} {...p}>
+    <path
+      {...stroke}
+      d="M3 8h11a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 16h8a2 2 0 1 1-2 2"
+    />
+  </Svg>
+)
+export const WetterNebel = (p) => (
+  <Svg {...W} {...p}>
+    <path {...stroke} d="M6.5 13a3.5 3.5 0 0 1-.4-6.98A5.5 5.5 0 0 1 16.9 5.2 4 4 0 0 1 16 13H6.5Z" />
+    <path {...stroke} d="M5 16.5h14M7 19.5h10" />
+  </Svg>
+)
+
+// Wetter-Wert → Icon-Komponente
+const WETTER_ICONS = {
+  Sonnig: WetterSonnig,
+  'Bewölkt': WetterBewoelkt,
+  'Leichter Regen': WetterLeichterRegen,
+  Starkregen: WetterStarkregen,
+  Frost: WetterFrost,
+  Schnee: WetterSchnee,
+  Sturm: WetterSturm,
+  Nebel: WetterNebel,
+}
+export function WetterSymbol({ wert, ...rest }) {
+  const Icon = WETTER_ICONS[wert] || WetterBewoelkt
+  return <Icon {...rest} />
+}
+
+/* ---------- Große Status-Icons (Melden-Sonderscreens) ---------- */
+export const IconSchloss = (p) => (
+  <Svg {...W} {...p}>
+    <rect {...stroke} x="5" y="10" width="14" height="10" rx="2" />
+    <path {...stroke} d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2.5" />
+  </Svg>
+)
+export const IconOffline = (p) => (
+  <Svg {...W} {...p}>
+    <path
+      {...stroke}
+      d="M2.5 8.5a14 14 0 0 1 8-3.9M15.5 5.2a14 14 0 0 1 6 3.3M5.5 12a9.5 9.5 0 0 1 4.5-2.6M14.8 9.9a9.5 9.5 0 0 1 3.7 2.1M8.5 15.4A5 5 0 0 1 12 14a5 5 0 0 1 3.5 1.4M12 19h.01M3 3l18 18"
+    />
+  </Svg>
+)
+export const IconAusweis = (p) => (
+  <Svg {...W} {...p}>
+    <rect {...stroke} x="3" y="6" width="18" height="13" rx="2" />
+    <circle {...stroke} cx="8.5" cy="11.5" r="1.8" />
+    <path {...stroke} d="M5.8 16c.4-1.4 1.5-2.2 2.7-2.2s2.3.8 2.7 2.2M14 10.5h4M14 13.5h4" />
+  </Svg>
+)
+export const IconBarriere = (p) => (
+  <Svg {...W} {...p}>
+    <path {...stroke} d="M3 9h18v4H3zM5 13v7M19 13v7M5 5v4M19 5v4" />
+    <path {...stroke} d="m6 13 3-4M11 13l3-4M16 13l3-4" />
+  </Svg>
+)
+export const IconCheckKreis = (p) => (
+  <Svg {...W} {...p}>
+    <circle {...stroke} cx="12" cy="12" r="9" />
+    <path {...stroke} d="m8 12.5 2.7 2.7L16.5 9" strokeWidth="2" />
+  </Svg>
+)
+export const IconHelm = (p) => (
+  <Svg {...W} {...p}>
+    <path
+      {...stroke}
+      d="M4 15a8 8 0 0 1 5-7.4V11M15 11V7.6A8 8 0 0 1 20 15M10 6.5a2 2 0 0 1 4 0V11h-4V6.5Z"
+    />
+    <path {...stroke} d="M2.5 17.5c0-1.4 1.1-2.5 2.5-2.5h14c1.4 0 2.5 1.1 2.5 2.5H2.5Z" />
+  </Svg>
+)
+
 /* ---------- Modul→Icon-Mapping ---------- */
 export function ModulIcon({ name, ...rest }) {
   switch (name) {

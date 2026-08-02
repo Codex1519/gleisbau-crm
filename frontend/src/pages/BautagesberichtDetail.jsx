@@ -15,11 +15,11 @@ import {
 } from '../components/BautagesberichtFormFelder'
 import {
   WETTER_OPTIONEN,
-  wetterIcon,
   fortschrittFarbe,
   erstellerId,
   hatInhalt,
 } from '../lib/bautagesbericht'
+import { WetterSymbol } from '../components/Icons'
 import {
   IconArrowLeft,
   IconPencil,
@@ -286,9 +286,7 @@ export function BautagesberichtDetail() {
                 <div className="dok-meta-item">
                   <div className="label">Wetter</div>
                   <div className="wert">
-                    <span className="dok-wetter-gross">
-                      {wetterIcon(bericht.wetter)}
-                    </span>{' '}
+                    <span className="dok-wetter-gross"><WetterSymbol wert={bericht.wetter} /></span>{' '}
                     {wetterOpt?.label || bericht.wetter}
                     {hatInhalt(bericht.temperatur) &&
                       ` · ${bericht.temperatur} °C`}
