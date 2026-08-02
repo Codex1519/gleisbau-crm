@@ -189,6 +189,8 @@ export function Melden() {
     {
       id: 'wer',
       frage: 'Wer bist du?',
+      hinweis:
+        'Tippe deinen Namen an. Die Liste zeigt alle Baustellen-Mitarbeiter — es ist nichts vorausgewählt.',
       valid: () => !!a.ersteller_id,
     },
     {
@@ -440,7 +442,7 @@ export function Melden() {
               <button
                 key={p.id}
                 type="button"
-                className={`melden-wahl${
+                className={`melden-wahl mit-radio${
                   a.ersteller_id === p.id ? ' aktiv' : ''
                 }`}
                 onClick={() => {
@@ -448,6 +450,7 @@ export function Melden() {
                   setTimeout(() => setSchritt((s) => s + 1), 200)
                 }}
               >
+                <span className="radio" aria-hidden="true" />
                 {[p.vorname, p.nachname].filter(Boolean).join(' ')}
               </button>
             ))}

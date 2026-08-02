@@ -2587,3 +2587,27 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   font-style: italic;
   font-size: 13.5px;
 }
+
+/* Auswahl-Optionen mit Radio-Kreis — macht sichtbar, dass es eine
+   Auswahlliste ist und nichts vorausgefüllt/gespeichert wurde. */
+.melden-wahl.mit-radio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.melden-wahl .radio {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--bg-surface);
+}
+.melden-wahl.aktiv .radio {
+  border-color: var(--accent);
+  background: radial-gradient(
+    circle,
+    var(--accent) 0 45%,
+    var(--bg-surface) 50% 100%
+  );
+}
