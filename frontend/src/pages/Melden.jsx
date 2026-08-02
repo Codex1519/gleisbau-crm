@@ -595,7 +595,7 @@ export function Melden() {
             ))}
             {stammdaten.projekte.length === 0 && (
               <p className="melden-leer">
-                Keine aktiven Projekte — bitte im Büro melden.
+                Dir ist aktuell kein Projekt zugewiesen — bitte im Büro melden.
               </p>
             )}
           </div>

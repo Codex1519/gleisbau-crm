@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../components/Modal'
 import { EntityFelder } from '../components/EntityFelder'
 import { RelatedList } from '../components/RelatedList'
 import { Stundenzettel } from '../components/Stundenzettel'
+import { ProjektZuweisung } from '../components/ProjektZuweisung'
 import {
   bereiteFormDatenAuf,
   entityZuForm,
@@ -148,13 +149,6 @@ export function ProjektDetail() {
     if (!neuester || neuester.baufortschritt == null) return null
     return Number(neuester.baufortschritt) || 0
   }, [sortierteBerichte])
-
-  // Beteiligte Personen aus Bautagesberichten ableiten (unique, via Ersteller)
-  const beteiligtePersonen = useMemo(() => {
-    if (berichte.length === 0) return []
-    const ids = new Set(berichte.map((b) => erstellerId(b)).filter(Boolean))
-    return [...ids].map((pid) => personalMap.get(pid)).filter(Boolean)
-  }, [berichte, personalMap])
 
   return (
     <div className="content">
@@ -353,27 +347,10 @@ export function ProjektDetail() {
                 />
               </Sektion>
 
-              <Sektion
-                titel="Beteiligtes Personal"
-                count={beteiligtePersonen.length}
-              >
-                {beteiligtePersonen.length === 0 ? (
-                  <div className="empty-state" style={{ padding: '24px 12px' }}>
-                    <div className="empty-state-title">
-                      Noch nicht zugeordnet
-                    </div>
-                    <div className="empty-state-text">
-                      Personal wird über Bautagesberichte automatisch erfasst.
-                    </div>
-                  </div>
-                ) : (
-                  <RelatedList
-                    modulKey="personal"
-                    eintraege={beteiligtePersonen}
-                    renderSubtext={(p) => p.position || ''}
-                  />
-                )}
-              </Sektion>
+              <ProjektZuweisung
+                projektId={Number(id)}
+                personal={personal}
+              />
 
               <Sektion
                 titel="Gebuchte Stunden"

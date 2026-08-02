@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from auth import get_current_user
 from database import get_db
-from models import Bautagesbericht, Benutzer, Kunde, Personal, Projekt
+from models import Bautagesbericht, Benutzer, Kunde, Personal, Projekt, ProjektPersonal
 from schemas import BautagesberichtCreate
 
 router = APIRouter(prefix="/feld")
@@ -52,12 +52,27 @@ async def feld_stammdaten(
         }
 
     kunden = {k.id: k.name for k in db.query(Kunde)}
+
+    # Nur Projekte, denen dieser Mitarbeiter zugewiesen ist (projekt_personal).
+    # Ohne Zuweisung bleibt die Liste leer — das Formular zeigt dann den
+    # Hinweis, sich im Büro zu melden.
+    zugewiesen = set()
+    if person:
+        zugewiesen = {
+            z.projekt_id
+            for z in db.query(ProjektPersonal).filter(
+                ProjektPersonal.personal_id == person.id
+            )
+        }
+
     projekte = []
     for p in (
         db.query(Projekt)
         .filter(Projekt.status != "Abgeschlossen")
         .order_by(Projekt.name)
     ):
+        if p.id not in zugewiesen:
+            continue
         # Laufende Montagen dieses Projekts: neueste zuerst, je Montage der
         # letzte Bericht als Vorlage fürs Vorausfüllen des Folgetags.
         montagen = []
@@ -136,6 +151,23 @@ async def feld_bautagesbericht(
             detail=(
                 "Nur Baustellen-Personal (Polier, Vorarbeiter, Facharbeiter, "
                 "Bauhelfer) darf Berichte über das Feld-Formular senden."
+            ),
+        )
+    # Nur für zugewiesene Projekte melden — serverseitig erzwungen
+    zuweisung = (
+        db.query(ProjektPersonal)
+        .filter(
+            ProjektPersonal.projekt_id == b.projekt_id,
+            ProjektPersonal.personal_id == person.id,
+        )
+        .first()
+    )
+    if not zuweisung:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Du bist diesem Projekt nicht zugewiesen — "
+                "bitte im Büro melden."
             ),
         )
 

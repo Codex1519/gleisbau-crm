@@ -2791,3 +2791,51 @@ tr.montage-zeile td:first-child {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Projekt: Personal-Zuweisung ---------- */
+.zuweisung-hinweis {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.zuweisung-leer {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+.zuweisung-liste {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.zuweisung-zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--bg-muted);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+}
+.zuweisung-position { color: var(--text-muted); }
+.zuweisung-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.zuweisung-add select {
+  flex: 1;
+  max-width: 340px;
+  padding: 8px 32px 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-surface);
+}
