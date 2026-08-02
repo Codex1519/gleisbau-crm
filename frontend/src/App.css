@@ -2465,3 +2465,125 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
 }
 .melden-zentriert .melden-weiter { margin-top: 12px; width: auto; padding: 14px 28px; }
 .melden-emoji { font-size: 56px; }
+
+/* ---------- Melden: Projekt-Untertitel, Zeit, Unterschrift ---------- */
+.melden-wahl-sub {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.melden-wahl.aktiv .melden-wahl-sub { color: var(--accent); opacity: 0.8; }
+
+.melden-chip.aktiv {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.melden-zeit {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.melden-zeit-felder {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.melden-zeit-felder label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.melden-zeit-felder input {
+  padding: 13px 10px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  width: 100%;
+}
+.melden-zeit-felder input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.melden-zeit-summe {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  padding: 10px;
+  background: var(--accent-soft);
+  border-radius: var(--r-lg);
+}
+.melden-zeit-summe.fehler {
+  color: var(--danger-text);
+  background: var(--danger-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Unterschrift (Canvas) */
+.signatur {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.signatur-canvas {
+  width: 100%;
+  height: 220px;
+  background: #ffffff;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  touch-action: none;
+  cursor: crosshair;
+}
+.signatur-leiste {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.signatur-hinweis {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.signatur-leeren {
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.signatur-leeren:disabled { opacity: 0.4; cursor: default; }
+
+/* Unterschriften in der CRM-Detailansicht */
+.dok-unterschriften {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.dok-unterschrift img {
+  width: 100%;
+  max-width: 320px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.dok-unterschrift .fehlt {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 13.5px;
+}

@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+gleisbau.db
+Dockerfile
+.dockerignore

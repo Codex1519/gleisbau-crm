@@ -51,6 +51,14 @@ def fuehre_migrationen_aus() -> None:
         "besondere_vorkommnisse": "TEXT",
         "baufortschritt": "INTEGER",
         "bemerkungen": "TEXT",
+        # v0.8: Feld-Formular — Ort, Arbeitszeit, Unterschriften
+        "ort": "VARCHAR(200)",
+        "arbeitszeit_von": "VARCHAR(10)",
+        "arbeitszeit_bis": "VARCHAR(10)",
+        "pause_minuten": "INTEGER",
+        "unterschrift_auftragnehmer": "TEXT",
+        "unterschrift_auftraggeber": "TEXT",
+        "unterschrift_datum": "DATE",
     }
 
     with engine.begin() as conn:

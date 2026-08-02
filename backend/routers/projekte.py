@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Projekt
 from schemas import ProjektCreate, ProjektUpdate
@@ -28,7 +29,7 @@ async def read_projekt(id: int, db=Depends(get_db)):
     return projekt
 
 
-@router.delete("/projekte/{id}")
+@router.delete("/projekte/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_projekt(id: int, db=Depends(get_db)):
     projekt = db.query(Projekt).filter(Projekt.id == id).first()
     if not projekt:

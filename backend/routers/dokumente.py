@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Dokument
 from schemas import DokumentCreate, DokumentUpdate
@@ -28,7 +29,7 @@ async def read_dokument(id: int, db=Depends(get_db)):
     return d
 
 
-@router.delete("/dokumente/{id}")
+@router.delete("/dokumente/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_dokument(id: int, db=Depends(get_db)):
     d = db.query(Dokument).filter(Dokument.id == id).first()
     if not d:

@@ -12,6 +12,8 @@ class Kunde(Base):
     ort = Column(String(100))
     telefon = Column(String(20))
     email = Column(String(254))
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -24,6 +26,8 @@ class Maschine(Base):
     tuev_datum = Column(Date)
     kennzeichen = Column(String(50))
     naechste_wartung = Column(Date)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -43,6 +47,8 @@ class Personal(Base):
     crm_rolle = Column(String(50))
     kranktage = Column(Integer)
     urlaubstage = Column(Integer)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -58,6 +64,8 @@ class Projekt(Base):
     start_datum = Column(Date)
     end_datum = Column(Date)
     status = Column(String(50))
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -70,6 +78,8 @@ class Ansprechpartner(Base):
     telefon = Column(String(20))
     email = Column(String(254))
     position = Column(String(100))
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -81,6 +91,8 @@ class Notfallkontakt (Base):
     vorname = Column(String(100))
     telefon = Column(String(20))
     beziehung = Column(String(50))
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -90,6 +102,8 @@ class Qualifikation(Base):
     personal_id = Column(Integer, ForeignKey("personal.id"))
     bezeichnung = Column(String(200))
     gueltig_bis = Column(Date)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -101,6 +115,8 @@ class Zeiterfassung(Base):
     start_zeit = Column(DateTime)
     end_zeit = Column(DateTime)
     pause_minuten = Column(Integer)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -113,6 +129,8 @@ class Dokument(Base):
     status = Column(String(50))
     ausstellungsdatum = Column(Date)
     faelligkeitsdatum = Column(Date)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -120,6 +138,8 @@ class ProjektPersonal(Base):
     __tablename__ = "projekt_personal"
     projekt_id = Column(Integer, ForeignKey("projekte.id"), primary_key=True)
     personal_id = Column(Integer, ForeignKey("personal.id"), primary_key=True)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -127,6 +147,8 @@ class ProjektMaschine(Base):
     __tablename__ = "projekt_maschinen"
     projekt_id = Column(Integer, ForeignKey("projekte.id"), primary_key=True)
     maschinen_id = Column(Integer, ForeignKey("maschinen.id"), primary_key=True)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -153,7 +175,36 @@ class Bautagesbericht(Base):
     # Fortschritt & Notizen
     baufortschritt = Column(Integer)
     bemerkungen = Column(Text)
+    # Ort & Arbeitszeit (v0.8 — Feld-Formular)
+    ort = Column(String(200))
+    arbeitszeit_von = Column(String(10))
+    arbeitszeit_bis = Column(String(10))
+    pause_minuten = Column(Integer)
+    # Unterschriften (PNG-Data-URLs vom Touch-Canvas)
+    unterschrift_auftragnehmer = Column(Text)
+    unterschrift_auftraggeber = Column(Text)
+    unterschrift_datum = Column(Date)
     # Altlast (v0.2) — bleibt für Bestandsdaten erhalten
     beschreibung = Column(Text)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class Benutzer(Base):
+    """Login-Konten (v0.6). Nur Büro-Mitarbeiter brauchen eines —
+    die Verknüpfung zu Personal ist deshalb optional."""
+
+    __tablename__ = "benutzer"
+    id = Column(Integer, primary_key=True)
+    benutzername = Column(String(50), unique=True, nullable=False)
+    passwort_hash = Column(String(200), nullable=False)
+    # Rollen: 'admin' | 'bauleiter' | 'sachbearbeiter'
+    rolle = Column(String(30), nullable=False, default="sachbearbeiter")
+    aktiv = Column(Integer, nullable=False, default=1)  # SQLite: 1/0
+    personal_id = Column(Integer, ForeignKey("personal.id"), nullable=True)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

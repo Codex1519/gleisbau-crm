@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Notfallkontakt
 from schemas import NotfallkontaktCreate, NotfallkontaktUpdate
@@ -28,7 +29,7 @@ async def read_notfallkontakt(id: int, db=Depends(get_db)):
     return nk
 
 
-@router.delete("/notfallkontakte/{id}")
+@router.delete("/notfallkontakte/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_notfallkontakt(id: int, db=Depends(get_db)):
     nk = db.query(Notfallkontakt).filter(Notfallkontakt.id == id).first()
     if not nk:

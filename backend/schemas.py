@@ -201,6 +201,13 @@ class BautagesberichtCreate(BaseModel):
     besondere_vorkommnisse: str | None = None
     baufortschritt: int | None = None
     bemerkungen: str | None = None
+    ort: str | None = None
+    arbeitszeit_von: str | None = None
+    arbeitszeit_bis: str | None = None
+    pause_minuten: int | None = None
+    unterschrift_auftragnehmer: str | None = None
+    unterschrift_auftraggeber: str | None = None
+    unterschrift_datum: date | None = None
 
 
 class BautagesberichtUpdate(BaseModel):
@@ -217,3 +224,10 @@ class BautagesberichtUpdate(BaseModel):
     besondere_vorkommnisse: str | None = None
     baufortschritt: int | None = None
     bemerkungen: str | None = None
+    ort: str | None = None
+    arbeitszeit_von: str | None = None
+    arbeitszeit_bis: str | None = None
+    pause_minuten: int | None = None
+    unterschrift_auftragnehmer: str | None = None
+    unterschrift_auftraggeber: str | None = None
+    unterschrift_datum: date | None = None

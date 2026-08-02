@@ -59,6 +59,8 @@ export function BautagesberichtDetail() {
   const [confirmOffen, setConfirmOffen] = useState(false)
   const [loesche, setLoesche] = useState(false)
 
+  const [kunden, setKunden] = useState([])
+
   useEffect(() => {
     setLade(true)
     setFehler(null)
@@ -67,11 +69,13 @@ export function BautagesberichtDetail() {
       api.get('bautagesberichte', id),
       api.list('projekte'),
       api.list('personal'),
+      api.list('kunden'),
     ])
-      .then(([b, pr, pers]) => {
+      .then(([b, pr, pers, k]) => {
         setBericht(b)
         setProjekte(pr)
         setPersonal(pers)
+        setKunden(k)
       })
       .catch((e) => setFehler(e.message))
       .finally(() => setLade(false))
@@ -131,6 +135,23 @@ export function BautagesberichtDetail() {
   const ersteller = bericht
     ? personalMap.get(erstellerId(bericht))
     : null
+  const kunde =
+    projekt && projekt.kunden_id
+      ? kunden.find((k) => k.id === projekt.kunden_id)
+      : null
+
+  // Netto-Arbeitszeit aus Von/Bis/Pause ("07:00"–"17:00" − 30 min)
+  const arbeitszeitText = (() => {
+    if (!bericht?.arbeitszeit_von || !bericht?.arbeitszeit_bis) return null
+    const [vh, vm] = String(bericht.arbeitszeit_von).split(':').map(Number)
+    const [bh, bm] = String(bericht.arbeitszeit_bis).split(':').map(Number)
+    const pause = Number(bericht.pause_minuten) || 0
+    const netto = bh * 60 + bm - (vh * 60 + vm) - pause
+    const stunden = netto > 0 ? (netto / 60).toFixed(2) : null
+    return `${bericht.arbeitszeit_von}–${bericht.arbeitszeit_bis} · ${pause} Min. Pause${
+      stunden ? ` = ${stunden} h` : ''
+    }`
+  })()
   const projektName = projekt
     ? projekteModul.displayName(projekt)
     : bericht
@@ -239,6 +260,7 @@ export function BautagesberichtDetail() {
                 {ersteller
                   ? personalModul.displayName(ersteller)
                   : 'Ersteller unbekannt'}
+                {kunde && <> · Kunde: {kunde.name}</>}
               </div>
             </div>
             <div className="dok-meta">
@@ -246,6 +268,20 @@ export function BautagesberichtDetail() {
                 <div className="label">Datum</div>
                 <div className="wert">{bericht.datum || '—'}</div>
               </div>
+              {hatInhalt(bericht.ort) && (
+                <div className="dok-meta-item">
+                  <div className="label">Ort</div>
+                  <div className="wert">{bericht.ort}</div>
+                </div>
+              )}
+              {arbeitszeitText && (
+                <div className="dok-meta-item">
+                  <div className="label">Arbeitszeit</div>
+                  <div className="wert" style={{ fontSize: 14 }}>
+                    {arbeitszeitText}
+                  </div>
+                </div>
+              )}
               {hatInhalt(bericht.wetter) && (
                 <div className="dok-meta-item">
                   <div className="label">Wetter</div>
@@ -348,6 +384,45 @@ export function BautagesberichtDetail() {
           {hatInhalt(bericht.bemerkungen) && (
             <Sektion titel="Bemerkungen">
               <DokFeld titel="" wert={bericht.bemerkungen} />
+            </Sektion>
+          )}
+
+          {(bericht.unterschrift_auftragnehmer ||
+            bericht.unterschrift_auftraggeber ||
+            bericht.unterschrift_datum) && (
+            <Sektion titel="Unterschriften">
+              <div className="dok-unterschriften">
+                <div className="dok-unterschrift">
+                  <div className="value-label">Auftragnehmer</div>
+                  {bericht.unterschrift_auftragnehmer ? (
+                    <img
+                      src={bericht.unterschrift_auftragnehmer}
+                      alt="Unterschrift Auftragnehmer"
+                    />
+                  ) : (
+                    <div className="fehlt">keine Unterschrift</div>
+                  )}
+                </div>
+                <div className="dok-unterschrift">
+                  <div className="value-label">Auftraggeber</div>
+                  {bericht.unterschrift_auftraggeber ? (
+                    <img
+                      src={bericht.unterschrift_auftraggeber}
+                      alt="Unterschrift Auftraggeber"
+                    />
+                  ) : (
+                    <div className="fehlt">nicht vor Ort</div>
+                  )}
+                </div>
+              </div>
+              {bericht.unterschrift_datum && (
+                <div style={{ marginTop: 12, fontSize: 13.5 }}>
+                  <span className="value-label" style={{ marginRight: 8 }}>
+                    Unterschrieben am
+                  </span>
+                  {bericht.unterschrift_datum}
+                </div>
+              )}
             </Sektion>
           )}
         </>

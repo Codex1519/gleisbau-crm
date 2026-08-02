@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Qualifikation
 from schemas import QualifikationCreate, QualifikationUpdate
@@ -28,7 +29,7 @@ async def read_qualifikation(id: int, db=Depends(get_db)):
     return q
 
 
-@router.delete("/qualifikationen/{id}")
+@router.delete("/qualifikationen/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_qualifikation(id: int, db=Depends(get_db)):
     q = db.query(Qualifikation).filter(Qualifikation.id == id).first()
     if not q:

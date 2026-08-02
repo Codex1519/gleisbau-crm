@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Ansprechpartner
 from schemas import AnsprechpartnerCreate, AnsprechpartnerUpdate
@@ -28,7 +29,7 @@ async def read_ansprechpartner(id: int, db=Depends(get_db)):
     return ap
 
 
-@router.delete("/ansprechpartner/{id}")
+@router.delete("/ansprechpartner/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_ansprechpartner(id: int, db=Depends(get_db)):
     ap = db.query(Ansprechpartner).filter(Ansprechpartner.id == id).first()
     if not ap:

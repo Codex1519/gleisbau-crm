@@ -13,7 +13,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from database import get_db
-from models import Bautagesbericht, Personal, Projekt
+from models import Bautagesbericht, Kunde, Personal, Projekt
 from schemas import BautagesberichtCreate
 
 router = APIRouter(prefix="/feld")
@@ -50,8 +50,16 @@ async def feld_stammdaten(db=Depends(get_db)):
         for p in db.query(Personal).order_by(Personal.nachname, Personal.vorname)
         if ist_feldpersonal(p)
     ]
+    # Kunde je Projekt mitliefern — wird im Formular und Bericht angezeigt,
+    # ohne dass der Ausfüllende ihn eintippen muss.
+    kunden = {k.id: k.name for k in db.query(Kunde)}
     projekte = [
-        {"id": p.id, "name": p.name, "status": p.status}
+        {
+            "id": p.id,
+            "name": p.name,
+            "status": p.status,
+            "kunde": kunden.get(p.kunden_id),
+        }
         for p in db.query(Projekt)
         .filter(Projekt.status != "Abgeschlossen")
         .order_by(Projekt.name)

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from auth import require_loeschen
 from database import get_db
 from models import Kunde
 from schemas import KundeCreate, KundeUpdate
@@ -26,7 +27,7 @@ async def read_kunde(id: int, db = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
     return kunde
 
-@router.delete("/kunden/{id}")
+@router.delete("/kunden/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_kunde(id: int, db = Depends(get_db)):
     kunde = db.query(Kunde).filter(Kunde.id == id).first()
     if not kunde:

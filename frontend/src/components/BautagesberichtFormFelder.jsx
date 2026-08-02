@@ -77,6 +77,51 @@ export function BautagesberichtFormFelder({
               ))}
             </select>
           </label>
+
+          <label className="feld">
+            <span className="feld-label">Ort</span>
+            <input
+              type="text"
+              placeholder="z. B. Hamburg-Harburg, Gleis 3"
+              value={form.ort}
+              disabled={speichere}
+              onChange={(e) => set('ort', e.target.value)}
+            />
+          </label>
+        </div>
+      </Sektion>
+
+      <Sektion titel="Arbeitszeit">
+        <div className="felder" style={{ marginBottom: 0 }}>
+          <label className="feld">
+            <span className="feld-label">Von</span>
+            <input
+              type="time"
+              value={form.arbeitszeit_von}
+              disabled={speichere}
+              onChange={(e) => set('arbeitszeit_von', e.target.value)}
+            />
+          </label>
+          <label className="feld">
+            <span className="feld-label">Bis</span>
+            <input
+              type="time"
+              value={form.arbeitszeit_bis}
+              disabled={speichere}
+              onChange={(e) => set('arbeitszeit_bis', e.target.value)}
+            />
+          </label>
+          <label className="feld">
+            <span className="feld-label">Pause (Min.)</span>
+            <input
+              type="number"
+              min="0"
+              step="5"
+              value={form.pause_minuten}
+              disabled={speichere}
+              onChange={(e) => set('pause_minuten', e.target.value)}
+            />
+          </label>
         </div>
       </Sektion>
 
@@ -231,6 +276,9 @@ export function bautagesberichtPayload(form) {
     'behinderungen',
     'besondere_vorkommnisse',
     'bemerkungen',
+    'ort',
+    'arbeitszeit_von',
+    'arbeitszeit_bis',
   ]
   for (const f of textFelder) {
     payload[f] = form[f] && form[f].trim() ? form[f] : null
@@ -238,6 +286,10 @@ export function bautagesberichtPayload(form) {
   payload.temperatur =
     form.temperatur !== '' && form.temperatur != null
       ? Number(form.temperatur)
+      : null
+  payload.pause_minuten =
+    form.pause_minuten !== '' && form.pause_minuten != null
+      ? Number(form.pause_minuten)
       : null
   payload.baufortschritt = Number(form.baufortschritt) || 0
   return payload
@@ -260,5 +312,9 @@ export function berichtZuForm(bericht) {
     besondere_vorkommnisse: s(bericht.besondere_vorkommnisse),
     baufortschritt: s(bericht.baufortschritt ?? 0),
     bemerkungen: s(bericht.bemerkungen),
+    ort: s(bericht.ort),
+    arbeitszeit_von: s(bericht.arbeitszeit_von),
+    arbeitszeit_bis: s(bericht.arbeitszeit_bis),
+    pause_minuten: s(bericht.pause_minuten),
   }
 }

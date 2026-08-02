@@ -1,5 +1,6 @@
 from schemas import MaschineCreate, MaschineUpdate
 from fastapi import APIRouter, Depends, HTTPException, status
+from auth import require_loeschen
 from database import get_db
 from models import Maschine
 
@@ -25,7 +26,7 @@ async def read_maschine(id: int, db = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Maschine nicht gefunden")
     return maschine
 
-@router.delete("/maschinen/{id}")
+@router.delete("/maschinen/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_maschine(id: int, db = Depends(get_db)):
     maschine = db.query(Maschine).filter(Maschine.id == id).first()
     if not maschine:

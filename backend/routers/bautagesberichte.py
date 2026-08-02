@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Bautagesbericht
 from schemas import BautagesberichtCreate, BautagesberichtUpdate
@@ -28,7 +29,7 @@ async def read_bautagesbericht(id: int, db=Depends(get_db)):
     return b
 
 
-@router.delete("/bautagesberichte/{id}")
+@router.delete("/bautagesberichte/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_bautagesbericht(id: int, db=Depends(get_db)):
     b = db.query(Bautagesbericht).filter(Bautagesbericht.id == id).first()
     if not b:

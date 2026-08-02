@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Zeiterfassung
 from schemas import ZeiterfassungCreate, ZeiterfassungUpdate
@@ -28,7 +29,7 @@ async def read_zeiterfassung(id: int, db=Depends(get_db)):
     return z
 
 
-@router.delete("/zeiterfassungen/{id}")
+@router.delete("/zeiterfassungen/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_zeiterfassung(id: int, db=Depends(get_db)):
     z = db.query(Zeiterfassung).filter(Zeiterfassung.id == id).first()
     if not z:

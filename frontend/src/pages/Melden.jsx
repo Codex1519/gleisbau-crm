@@ -5,27 +5,37 @@ import {
   STANDARD_ROLLEN,
   serializePersonalAnwesend,
 } from '../components/PersonalAnwesendFeld'
+import { SignaturFeld } from '../components/SignaturFeld'
 import { WETTER_OPTIONEN } from '../lib/bautagesbericht'
-import { heuteISO } from '../lib/zeiterfassung'
+import { formatStunden, heuteISO } from '../lib/zeiterfassung'
 import { Spinner } from '../components/Spinner'
 
 // Feld-Formular: Bautagesbericht von der Baustelle, Zasta-Stil.
 // Eine Frage pro Bildschirm, Pflichtfelder blockieren "Weiter".
-// Zugang über ?key=... (FELD_KEY) — wird lokal gemerkt, damit der
-// Homescreen-Start auch ohne Query-Parameter funktioniert.
+//
+// Bewusst KEINE Personen-Speicherung: Jeder Aufruf startet neutral bei
+// "Wer bist du?". Lokal gemerkt wird ausschließlich der Link-Code
+// (damit der Start vom Homescreen ohne Query-Parameter funktioniert) —
+// der identifiziert das Gerät, nie eine Person.
 
 const KEY_STORAGE = 'gleisbau_feld_key'
-const WER_STORAGE = 'gleisbau_feld_wer'
 
 function feldFetch(pfad, key, options) {
   const sep = pfad.includes('?') ? '&' : '?'
   return fetch(`${API_BASE}${pfad}${sep}key=${encodeURIComponent(key)}`, options)
 }
 
+// "07:30" -> Minuten seit Mitternacht
+function zeitZuMinuten(hhmm) {
+  if (!hhmm) return null
+  const [h, m] = hhmm.split(':').map(Number)
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null
+  return h * 60 + m
+}
+
 export function Melden() {
   const [searchParams] = useSearchParams()
 
-  // Key aus URL übernehmen und merken; sonst aus dem Speicher
   const key = useMemo(() => {
     const ausUrl = searchParams.get('key')
     if (ausUrl) {
@@ -35,6 +45,11 @@ export function Melden() {
     return localStorage.getItem(KEY_STORAGE) || ''
   }, [searchParams])
 
+  // Alte Geräte: früher gespeicherte Personen-Auswahl entfernen
+  useEffect(() => {
+    localStorage.removeItem('gleisbau_feld_wer')
+  }, [])
+
   const [stammdaten, setStammdaten] = useState(null)
   const [ladeFehler, setLadeFehler] = useState(null)
   const [schritt, setSchritt] = useState(0)
@@ -43,11 +58,15 @@ export function Melden() {
   const [fertig, setFertig] = useState(false)
 
   const [a, setA] = useState(() => ({
-    ersteller_id: Number(localStorage.getItem(WER_STORAGE)) || null,
+    ersteller_id: null,
     projekt_id: null,
     datum: heuteISO(),
+    ort: '',
     wetter: '',
     temperatur: '',
+    von: '',
+    bis: '',
+    pause: '30',
     arbeiten: '',
     counts: Object.fromEntries(STANDARD_ROLLEN.map((r) => [r, 0])),
     extra: [],
@@ -58,6 +77,10 @@ export function Melden() {
     vorkommnisse: '',
     fortschritt: 0,
     bemerkungen: '',
+    sigAuftragnehmer: '',
+    sigAuftraggeber: '',
+    agNichtVorOrt: false,
+    sigDatum: heuteISO(),
   }))
 
   function set(feld, wert) {
@@ -87,12 +110,19 @@ export function Melden() {
       0
     )
 
+  // Netto-Arbeitszeit in Minuten (Bis − Von − Pause)
+  const nettoMinuten = useMemo(() => {
+    const von = zeitZuMinuten(a.von)
+    const bis = zeitZuMinuten(a.bis)
+    if (von == null || bis == null) return null
+    return bis - von - (Number(a.pause) || 0)
+  }, [a.von, a.bis, a.pause])
+
   // ---------- Schritte ----------
   const schritte = [
     {
       id: 'wer',
       frage: 'Wer bist du?',
-      hinweis: 'Wird für das nächste Mal gemerkt.',
       valid: () => !!a.ersteller_id,
     },
     {
@@ -106,10 +136,22 @@ export function Melden() {
       valid: () => !!a.datum,
     },
     {
+      id: 'ort',
+      frage: 'Wo ist die Baustelle?',
+      hinweis: 'Ort oder Streckenabschnitt, z. B. „Hamburg-Harburg, Gleis 3".',
+      valid: () => a.ort.trim().length > 0,
+    },
+    {
       id: 'wetter',
       frage: 'Wie war das Wetter?',
       hinweis: 'Optional — einfach Weiter, wenn egal.',
       valid: () => true,
+    },
+    {
+      id: 'zeit',
+      frage: 'Wie lange wurde gearbeitet?',
+      hinweis: 'Von, Bis und Pause — die Stunden rechnen wir aus.',
+      valid: () => nettoMinuten != null && nettoMinuten > 0,
     },
     {
       id: 'arbeiten',
@@ -143,6 +185,23 @@ export function Melden() {
       valid: () => true,
     },
     {
+      id: 'sig_an',
+      frage: 'Unterschrift Auftragnehmer',
+      hinweis: 'Das bist du — unterschreibe mit dem Finger.',
+      valid: () => !!a.sigAuftragnehmer,
+    },
+    {
+      id: 'sig_ag',
+      frage: 'Unterschrift Auftraggeber',
+      hinweis: 'Vertreter des Auftraggebers vor Ort unterschreiben lassen.',
+      valid: () => !!a.sigAuftraggeber || a.agNichtVorOrt,
+    },
+    {
+      id: 'sig_datum',
+      frage: 'Datum der Unterschrift',
+      valid: () => !!a.sigDatum,
+    },
+    {
       id: 'fertig',
       frage: 'Alles richtig?',
       valid: () => true,
@@ -170,14 +229,22 @@ export function Melden() {
         projekt_id: a.projekt_id,
         ersteller_id: a.ersteller_id,
         datum: a.datum,
+        ort: a.ort.trim(),
+        arbeitszeit_von: a.von,
+        arbeitszeit_bis: a.bis,
+        pause_minuten: Number(a.pause) || 0,
         arbeiten_durchgefuehrt: a.arbeiten.trim(),
         personal_anwesend: serializePersonalAnwesend(a.counts, a.extra),
         maschinen_eingesetzt: a.maschinen.trim(),
         materiallieferungen: a.material.trim(),
         baufortschritt: Number(a.fortschritt) || 0,
+        unterschrift_auftragnehmer: a.sigAuftragnehmer,
+        unterschrift_datum: a.sigDatum,
       }
       if (a.wetter) payload.wetter = a.wetter
       if (a.temperatur !== '') payload.temperatur = Number(a.temperatur)
+      if (a.sigAuftraggeber)
+        payload.unterschrift_auftraggeber = a.sigAuftraggeber
       if (a.problemeJa && a.behinderungen.trim())
         payload.behinderungen = a.behinderungen.trim()
       if (a.problemeJa && a.vorkommnisse.trim())
@@ -203,11 +270,16 @@ export function Melden() {
   }
 
   function neuerBericht() {
-    setA((alt) => ({
-      ...alt,
+    setA({
+      ersteller_id: null,
       projekt_id: null,
+      datum: heuteISO(),
+      ort: '',
       wetter: '',
       temperatur: '',
+      von: '',
+      bis: '',
+      pause: '30',
       arbeiten: '',
       counts: Object.fromEntries(STANDARD_ROLLEN.map((r) => [r, 0])),
       extra: [],
@@ -218,8 +290,11 @@ export function Melden() {
       vorkommnisse: '',
       fortschritt: 0,
       bemerkungen: '',
-      datum: heuteISO(),
-    }))
+      sigAuftragnehmer: '',
+      sigAuftraggeber: '',
+      agNichtVorOrt: false,
+      sigDatum: heuteISO(),
+    })
     setFertig(false)
     setSchritt(0)
   }
@@ -302,7 +377,6 @@ export function Melden() {
                 }`}
                 onClick={() => {
                   set('ersteller_id', p.id)
-                  localStorage.setItem(WER_STORAGE, String(p.id))
                   setTimeout(() => setSchritt((s) => s + 1), 200)
                 }}
               >
@@ -335,6 +409,9 @@ export function Melden() {
                 }}
               >
                 {p.name}
+                {p.kunde && (
+                  <span className="melden-wahl-sub">Kunde: {p.kunde}</span>
+                )}
               </button>
             ))}
             {stammdaten.projekte.length === 0 && (
@@ -353,6 +430,18 @@ export function Melden() {
             value={a.datum}
             max={heuteISO()}
             onChange={(e) => set('datum', e.target.value)}
+          />
+        )
+
+      case 'ort':
+        return (
+          <input
+            type="text"
+            className="melden-datum"
+            placeholder="z. B. Hamburg-Harburg, Gleis 3"
+            value={a.ort}
+            autoFocus
+            onChange={(e) => set('ort', e.target.value)}
           />
         )
 
@@ -387,6 +476,52 @@ export function Melden() {
               />
             </label>
           </>
+        )
+
+      case 'zeit':
+        return (
+          <div className="melden-zeit">
+            <div className="melden-zeit-felder">
+              <label>
+                <span>Von</span>
+                <input
+                  type="time"
+                  value={a.von}
+                  onChange={(e) => set('von', e.target.value)}
+                />
+              </label>
+              <label>
+                <span>Bis</span>
+                <input
+                  type="time"
+                  value={a.bis}
+                  onChange={(e) => set('bis', e.target.value)}
+                />
+              </label>
+              <label>
+                <span>Pause (Min.)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="5"
+                  inputMode="numeric"
+                  value={a.pause}
+                  onChange={(e) => set('pause', e.target.value)}
+                />
+              </label>
+            </div>
+            <div
+              className={`melden-zeit-summe${
+                nettoMinuten != null && nettoMinuten <= 0 ? ' fehler' : ''
+              }`}
+            >
+              {nettoMinuten == null
+                ? 'Von und Bis eintragen'
+                : nettoMinuten <= 0
+                ? 'Ende muss nach dem Anfang liegen'
+                : `= ${formatStunden(nettoMinuten)} Stunden`}
+            </div>
+          </div>
         )
 
       case 'arbeiten':
@@ -623,6 +758,52 @@ export function Melden() {
           </div>
         )
 
+      case 'sig_an':
+        return (
+          <SignaturFeld
+            key="sig-an"
+            wert={a.sigAuftragnehmer}
+            onChange={(v) => set('sigAuftragnehmer', v)}
+          />
+        )
+
+      case 'sig_ag':
+        return (
+          <>
+            <SignaturFeld
+              key="sig-ag"
+              wert={a.sigAuftraggeber}
+              onChange={(v) => {
+                set('sigAuftraggeber', v)
+                if (v) set('agNichtVorOrt', false)
+              }}
+            />
+            <button
+              type="button"
+              className={`melden-chip${a.agNichtVorOrt ? ' aktiv' : ''}`}
+              onClick={() => {
+                set('agNichtVorOrt', !a.agNichtVorOrt)
+                if (!a.agNichtVorOrt) set('sigAuftraggeber', '')
+              }}
+            >
+              {a.agNichtVorOrt
+                ? '✓ Auftraggeber nicht vor Ort'
+                : 'Auftraggeber nicht vor Ort'}
+            </button>
+          </>
+        )
+
+      case 'sig_datum':
+        return (
+          <input
+            type="date"
+            className="melden-datum"
+            value={a.sigDatum}
+            max={heuteISO()}
+            onChange={(e) => set('sigDatum', e.target.value)}
+          />
+        )
+
       case 'fertig':
         return (
           <div className="melden-zusammenfassung">
@@ -639,11 +820,25 @@ export function Melden() {
               </div>
               <div>
                 <dt>Projekt</dt>
-                <dd>{projekt?.name || '—'}</dd>
+                <dd>
+                  {projekt?.name || '—'}
+                  {projekt?.kunde && ` · ${projekt.kunde}`}
+                </dd>
               </div>
               <div>
                 <dt>Datum</dt>
                 <dd>{a.datum}</dd>
+              </div>
+              <div>
+                <dt>Ort</dt>
+                <dd>{a.ort}</dd>
+              </div>
+              <div>
+                <dt>Arbeitszeit</dt>
+                <dd>
+                  {a.von}–{a.bis} · {Number(a.pause) || 0} Min. Pause ={' '}
+                  {formatStunden(nettoMinuten)} h
+                </dd>
               </div>
               {a.wetter && (
                 <div>
@@ -683,6 +878,16 @@ export function Melden() {
               <div>
                 <dt>Fortschritt</dt>
                 <dd>{a.fortschritt}%</dd>
+              </div>
+              <div>
+                <dt>Unterschrift</dt>
+                <dd>
+                  Auftragnehmer ✓ ·{' '}
+                  {a.sigAuftraggeber
+                    ? 'Auftraggeber ✓'
+                    : 'Auftraggeber nicht vor Ort'}{' '}
+                  · {a.sigDatum}
+                </dd>
               </div>
             </dl>
             <label className="melden-bemerkung">

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from auth import require_loeschen
 from database import get_db
 from models import Personal
 from schemas import PersonalCreate, PersonalUpdate
@@ -28,7 +29,7 @@ async def read_personal(id: int, db=Depends(get_db)):
     return person
 
 
-@router.delete("/personal/{id}")
+@router.delete("/personal/{id}", dependencies=[Depends(require_loeschen)])
 async def delete_personal(id: int, db=Depends(get_db)):
     person = db.query(Personal).filter(Personal.id == id).first()
     if not person:
