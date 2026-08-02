@@ -17,12 +17,12 @@ import {
 } from '../components/FormField'
 import {
   IconArrowLeft,
-  IconTrash,
   IconPlus,
   IconPencil,
   IconSave,
   IconX,
 } from '../components/Icons'
+import { LoeschenButton } from '../components/LoeschenButton'
 import {
   wetterIcon,
   fortschrittFarbe,
@@ -214,14 +214,7 @@ export function ProjektDetail() {
                     <IconPencil />
                     Bearbeiten
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => setConfirmOffen(true)}
-                  >
-                    <IconTrash />
-                    Löschen
-                  </button>
+                  <LoeschenButton onClick={() => setConfirmOffen(true)} />
                 </>
               )}
             </>

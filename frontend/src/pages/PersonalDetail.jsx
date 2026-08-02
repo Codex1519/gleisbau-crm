@@ -26,12 +26,12 @@ import {
 } from '../lib/zeiterfassung'
 import {
   IconArrowLeft,
-  IconTrash,
   IconPlus,
   IconPencil,
   IconSave,
   IconX,
 } from '../components/Icons'
+import { LoeschenButton } from '../components/LoeschenButton'
 
 export function PersonalDetail() {
   const { id } = useParams()
@@ -234,14 +234,7 @@ export function PersonalDetail() {
                     <IconPencil />
                     Bearbeiten
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => setConfirmOffen(true)}
-                  >
-                    <IconTrash />
-                    Löschen
-                  </button>
+                  <LoeschenButton onClick={() => setConfirmOffen(true)} />
                 </>
               )}
             </>

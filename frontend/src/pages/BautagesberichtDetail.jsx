@@ -22,12 +22,12 @@ import {
 } from '../lib/bautagesbericht'
 import {
   IconArrowLeft,
-  IconTrash,
   IconPencil,
   IconSave,
   IconX,
   IconPrint,
 } from '../components/Icons'
+import { LoeschenButton } from '../components/LoeschenButton'
 
 // Ein Feld der Dokumentansicht — wird nur gerendert wenn Inhalt vorhanden.
 function DokFeld({ titel, wert }) {
@@ -302,14 +302,7 @@ export function BautagesberichtDetail() {
                 <IconPencil />
                 Bearbeiten
               </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => setConfirmOffen(true)}
-              >
-                <IconTrash />
-                Löschen
-              </button>
+              <LoeschenButton onClick={() => setConfirmOffen(true)} />
             </div>
           </div>
 

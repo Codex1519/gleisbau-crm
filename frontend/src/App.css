@@ -1722,3 +1722,206 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   opacity: 1;
   text-decoration: underline;
 }
+
+/* ============================================
+   Theme-Toggle (Topbar) + Theme-Auswahl (Einstellungen)
+   ============================================ */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.theme-toggle:hover {
+  background: var(--bg-muted);
+  color: var(--text);
+}
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.theme-wahl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  color: var(--text);
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+.theme-option:hover {
+  border-color: var(--accent-soft-border);
+  background: var(--bg-hover);
+}
+.theme-option.aktiv {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.theme-option-icon {
+  color: var(--text-secondary);
+}
+.theme-option-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.theme-option.aktiv .theme-option-icon {
+  color: var(--accent);
+}
+.theme-option-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.theme-option-text {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ============================================
+   Dunkles Farbschema
+   Aktiv über data-theme="dunkel" auf <html>.
+   Kern-Trick: die Slate-Skala wird invertiert — dadurch stimmen
+   alle Regeln, die var(--slate-*) nutzen, automatisch mit.
+   ============================================ */
+:root[data-theme='dunkel'] {
+  color-scheme: dark;
+
+  /* Invertierte Slate-Skala */
+  --slate-50: #1a2334;
+  --slate-100: #223047;
+  --slate-200: #2c3b55;
+  --slate-300: #3b4d6b;
+  --slate-400: #64748b;
+  --slate-500: #8fa0b8;
+  --slate-600: #b3c0d1;
+  --slate-700: #cbd5e1;
+  --slate-800: #e2e8f0;
+  --slate-900: #f1f5f9;
+
+  /* Flächen */
+  --bg-page: #0e1626;
+  --bg-surface: #16202f;
+  --bg-muted: var(--slate-100);
+  --bg-hover: #1c2739;
+  --border: #263449;
+  --border-strong: #33445e;
+
+  /* Text */
+  --text: var(--slate-900);
+  --text-secondary: var(--slate-600);
+  --text-muted: var(--slate-400);
+
+  /* Akzent — im Dunkeln etwas heller für Kontrast */
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-soft: rgba(59, 130, 246, 0.14);
+  --accent-soft-border: rgba(59, 130, 246, 0.4);
+  --accent-text: #93c5fd;
+
+  /* Status */
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --success-soft-border: rgba(16, 185, 129, 0.35);
+  --success-text: #6ee7b7;
+
+  --danger: #ef4444;
+  --danger-hover: #f87171;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --danger-soft-border: rgba(239, 68, 68, 0.35);
+  --danger-text: #fca5a5;
+
+  /* Schatten: auf dunklem Grund kräftiger */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+
+  --brand-gradient: linear-gradient(135deg, #2563eb, #6d28d9);
+  --brand-gradient-hover: linear-gradient(135deg, #3b82f6, #7c3aed);
+}
+
+/* ---------- Patches für hart codierte Farben ---------- */
+:root[data-theme='dunkel'] main.main {
+  background: linear-gradient(180deg, #121c30 0%, var(--bg-page) 280px);
+}
+:root[data-theme='dunkel'] .topbar {
+  background: rgba(14, 22, 38, 0.82);
+}
+:root[data-theme='dunkel'] .card-header {
+  background: linear-gradient(180deg, rgba(26, 35, 52, 0.5), var(--bg-surface));
+}
+:root[data-theme='dunkel'] .alert-success {
+  background: var(--success-soft);
+  border-color: var(--success-soft-border);
+  color: var(--success-text);
+}
+:root[data-theme='dunkel'] .status-badge.farbe-blau {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+:root[data-theme='dunkel'] .status-badge.farbe-gelb {
+  background: rgba(202, 138, 4, 0.15);
+  color: #fde047;
+  border-color: rgba(202, 138, 4, 0.4);
+}
+:root[data-theme='dunkel'] .status-badge.farbe-gruen {
+  background: rgba(16, 185, 129, 0.14);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+:root[data-theme='dunkel'] table.table-zebra tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.025);
+}
+:root[data-theme='dunkel'] table.table-zebra tbody tr:hover td {
+  background: var(--accent-soft);
+}
+:root[data-theme='dunkel'] table.stundenzettel tbody tr.ueberstunde td {
+  background: rgba(202, 138, 4, 0.1);
+}
+:root[data-theme='dunkel'] table.stundenzettel tbody tr.ueberstunde:hover td {
+  background: rgba(202, 138, 4, 0.16);
+}
+:root[data-theme='dunkel'] .ueber-tag {
+  background: rgba(202, 138, 4, 0.25);
+  color: #fde047;
+}
+:root[data-theme='dunkel'] .woche-zelle.ueber {
+  background: rgba(202, 138, 4, 0.12);
+  color: #fde047;
+}
+:root[data-theme='dunkel'] .kanban-spalte-header.farbe-grau { color: var(--slate-600); }
+:root[data-theme='dunkel'] .kanban-spalte-header.farbe-blau { color: #93c5fd; }
+:root[data-theme='dunkel'] .kanban-spalte-header.farbe-gelb { color: #fde047; }
+:root[data-theme='dunkel'] .kanban-spalte-header.farbe-gruen { color: #6ee7b7; }
+:root[data-theme='dunkel'] .notice {
+  color: var(--accent-text);
+}
+:root[data-theme='dunkel'] .feld select {
+  /* Chevron in hellerem Grau für dunkle Flächen */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='m5 8 5 5 5-5' stroke='%238fa0b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+:root[data-theme='dunkel'] ::selection {
+  background: rgba(59, 130, 246, 0.35);
+}

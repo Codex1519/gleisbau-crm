@@ -11,6 +11,7 @@ import { StatusBadge } from '../components/StatusBadge'
 import { IconPlus, IconSearch, IconRefresh } from '../components/Icons'
 import { ladeFkDaten } from '../lib/fkLoader'
 import { formatiereWert } from '../components/FormField'
+import { exportiereCsv } from '../lib/csvExport'
 
 export function ListPage({ modulKey }) {
   const navigate = useNavigate()
@@ -81,6 +82,20 @@ export function ListPage({ modulKey }) {
 
   const spalten = modul.listSpalten
 
+  // Gefilterte Ansicht als CSV herunterladen (Spalten wie in der Tabelle)
+  function exportieren() {
+    const felder = spalten
+      .map((key) => modul.felder.find((x) => x.name === key))
+      .filter(Boolean)
+    const header = ['ID', ...felder.map((f) => f.label)]
+    const rows = gefiltert.map((e) => [
+      e.id,
+      ...felder.map((f) => formatiereWert(f, e[f.name], fkLabels) ?? ''),
+    ])
+    const stempel = new Date().toISOString().slice(0, 10)
+    exportiereCsv(`${modul.key}_${stempel}.csv`, [header, ...rows])
+  }
+
   return (
     <div className="content">
       <Breadcrumb items={[{ label: 'Module', to: '/' }, { label: modul.label }]} />
@@ -93,6 +108,16 @@ export function ListPage({ modulKey }) {
           </h1>
         </div>
         <div className="aktionen">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={exportieren}
+            disabled={lade || gefiltert.length === 0}
+            title="Gefilterte Ansicht als CSV exportieren (Excel-tauglich)"
+          >
+            <IconDownload />
+            Export CSV
+          </button>
           <button
             type="button"
             className="btn btn-secondary"
@@ -210,5 +235,25 @@ export function ListPage({ modulKey }) {
         )}
       </Sektion>
     </div>
+  )
+}
+
+function IconDownload(props) {
+  return (
+    <svg
+      className="icon"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15h12"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }

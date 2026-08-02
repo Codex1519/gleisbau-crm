@@ -104,21 +104,5 @@ export function wochenTageAb(montag) {
 }
 
 // ---------- CSV-Export ----------
-// zeilen: Array von Arrays (erste Zeile = Header).
-export function exportiereCsv(dateiname, zeilen) {
-  const escape = (val) => {
-    const s = String(val ?? '')
-    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
-  }
-  const csv = zeilen.map((z) => z.map(escape).join(',')).join('\n')
-  // BOM voranstellen → Excel erkennt UTF-8 (Umlaute korrekt).
-  const blob = new Blob(['﻿' + csv], {
-    type: 'text/csv;charset=utf-8;',
-  })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = dateiname
-  a.click()
-  URL.revokeObjectURL(url)
-}
+// Zentral in lib/csvExport.js (Semikolon-Trenner für deutsches Excel).
+export { exportiereCsv } from './csvExport'

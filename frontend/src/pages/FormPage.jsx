@@ -152,7 +152,12 @@ export function FormPage({ modulKey }) {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={speichere}
+                disabled={speichere || fehlendeFkInfo.length > 0}
+                title={
+                  fehlendeFkInfo.length > 0
+                    ? `Zuerst ${fehlendeFkInfo.map((f) => f.label).join(' und ')} anlegen`
+                    : undefined
+                }
               >
                 {speichere ? <Spinner /> : <IconPlus />}
                 {speichere ? 'Speichert…' : `${modul.einzahl} anlegen`}

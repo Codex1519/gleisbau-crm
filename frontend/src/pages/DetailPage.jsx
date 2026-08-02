@@ -16,11 +16,11 @@ import {
 } from '../components/FormField'
 import {
   IconArrowLeft,
-  IconTrash,
   IconPencil,
   IconSave,
   IconX,
 } from '../components/Icons'
+import { LoeschenButton } from '../components/LoeschenButton'
 
 export function DetailPage({ modulKey }) {
   const { id } = useParams()
@@ -127,6 +127,9 @@ export function DetailPage({ modulKey }) {
           {entity && (
             <div className="subtitel">
               {modul.einzahl} · ID #{entity.id}
+              {entity.erstellt_von && ` · Angelegt von ${entity.erstellt_von}`}
+              {entity.geaendert_von &&
+                ` · Geändert von ${entity.geaendert_von}`}
               {editMode && ' · Bearbeiten'}
             </div>
           )}
@@ -169,14 +172,7 @@ export function DetailPage({ modulKey }) {
                     <IconPencil />
                     Bearbeiten
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => setConfirmOffen(true)}
-                  >
-                    <IconTrash />
-                    Löschen
-                  </button>
+                  <LoeschenButton onClick={() => setConfirmOffen(true)} />
                 </>
               )}
             </>

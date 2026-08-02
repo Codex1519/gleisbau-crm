@@ -4,6 +4,13 @@ import { MODULE } from './modules'
 import { Layout } from './components/Layout'
 import { ToastProvider } from './contexts/ToastContext'
 import { SearchProvider } from './contexts/SearchContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
+import { Login } from './pages/Login'
+import { BenutzerVerwaltung } from './pages/BenutzerVerwaltung'
+import { PasswortAendern } from './pages/PasswortAendern'
+import { Einstellungen } from './pages/Einstellungen'
+import { LadeBlock } from './components/Spinner'
 import { Dashboard } from './pages/Dashboard'
 import { ListPage } from './pages/ListPage'
 import { FormPage } from './pages/FormPage'
@@ -43,13 +50,47 @@ const CUSTOM_NEU = {
 // Module ohne aufrufbare Detail-Seite — Einträge sind nur im Kontext sinnvoll.
 const KEINE_DETAIL_ROUTE = new Set(['zeiterfassungen'])
 
+// Nur eingeloggte Benutzer — sonst zur Login-Seite.
+function RequireAuth({ children }) {
+  const { benutzer, laedt } = useAuth()
+  if (laedt) return <LadeBlock text="Anmeldung wird geprüft…" />
+  if (!benutzer) return <Navigate to="/login" replace />
+  return children
+}
+
+// Nur Admins — sonst zurück zum Dashboard.
+function NurAdmin({ children }) {
+  const { istAdmin } = useAuth()
+  if (!istAdmin) return <Navigate to="/" replace />
+  return children
+}
+
 export default function App() {
   return (
+    <ThemeProvider>
+    <AuthProvider>
     <ToastProvider>
       <SearchProvider>
         <Routes>
-        <Route element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+        <Route
+          element={
+            <RequireAuth>
+              <Layout />
+            </RequireAuth>
+          }
+        >
           <Route path="/" element={<Dashboard />} />
+          <Route path="/passwort" element={<PasswortAendern />} />
+          <Route path="/einstellungen" element={<Einstellungen />} />
+          <Route
+            path="/benutzer"
+            element={
+              <NurAdmin>
+                <BenutzerVerwaltung />
+              </NurAdmin>
+            }
+          />
 
           {MODULE.map((m) => {
             const CustomListe = CUSTOM_LISTE[m.key]
@@ -91,5 +132,7 @@ export default function App() {
         </Routes>
       </SearchProvider>
     </ToastProvider>
+    </AuthProvider>
+    </ThemeProvider>
   )
 }

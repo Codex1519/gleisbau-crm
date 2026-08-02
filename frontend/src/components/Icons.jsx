@@ -117,6 +117,32 @@ export const IconPrint = (p) => (
     <path {...stroke} d="M6 8V3h8v5M6 14H4V8h12v6h-2M7 12h6v5H7z" />
   </Svg>
 )
+export const IconSonne = (p) => (
+  <Svg {...p}>
+    <circle {...stroke} cx="10" cy="10" r="3.5" />
+    <path
+      {...stroke}
+      d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4"
+    />
+  </Svg>
+)
+export const IconMond = (p) => (
+  <Svg {...p}>
+    <path
+      {...stroke}
+      d="M16.5 11.5A6.5 6.5 0 0 1 8.5 3.5a6.5 6.5 0 1 0 8 8Z"
+    />
+  </Svg>
+)
+export const IconZahnrad = (p) => (
+  <Svg {...p}>
+    <circle {...stroke} cx="10" cy="10" r="2.5" />
+    <path
+      {...stroke}
+      d="M10 2.8v2M10 15.2v2M2.8 10h2M15.2 10h2M4.9 4.9l1.4 1.4M13.7 13.7l1.4 1.4M15.1 4.9l-1.4 1.4M6.3 13.7l-1.4 1.4"
+    />
+  </Svg>
+)
 export const IconUpload = (p) => (
   <Svg {...p}>
     <path
