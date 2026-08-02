@@ -245,7 +245,7 @@ export function BautagesberichteListe() {
                             Montage „{block.name}"
                             {proj && ` — ${projekteModul.displayName(proj)}`}
                             <span className="group-count">
-                              · {block.berichte.length} Bericht
+                              {' '}· {block.berichte.length} Bericht
                               {block.berichte.length === 1 ? '' : 'e'}
                             </span>
                           </td>
