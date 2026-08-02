@@ -41,7 +41,12 @@ function authHeaders() {
 
 async function handle(res) {
   // Sitzung abgelaufen / kein Login -> zurück zur Login-Seite
-  if (res.status === 401 && !window.location.pathname.startsWith('/login')) {
+  // /melden (Feld-Formular) ist öffentlich und nutzt keinen CRM-Login —
+  // ein abgelaufener alter Token darf dort NICHT zum Login umleiten.
+  const oeffentlich =
+    window.location.pathname.startsWith('/login') ||
+    window.location.pathname.startsWith('/melden')
+  if (res.status === 401 && !oeffentlich) {
     setToken(null)
     window.location.href = '/login'
     return new Promise(() => {}) // Navigation läuft, nichts mehr auflösen
