@@ -1,30 +1,27 @@
-"""Feld-Zugang: Bautagesberichte von der Baustelle ohne CRM-Login.
+"""Feld-Zugang: Bautagesberichte von der Baustelle mit persönlichem Login.
 
-Zugriff über einen festen Link-Code (FELD_KEY, per .env auf dem Server).
-Der Code erlaubt ausschließlich:
-  - Stammdaten lesen (Namen + aktive Projekte, minimal)
-  - einen Bautagesbericht anlegen
-Kein Lesen von Berichten, kein Ändern, kein Löschen, kein CRM-Zugriff.
+Jeder Baustellen-Mitarbeiter hat ein Benutzerkonto (Rolle "feld"), das
+über personal_id mit seinem Personal-Eintrag verknüpft ist. Nach dem
+Login steht damit fest, WER den Bericht schreibt — der Ersteller wird
+serverseitig aus dem Konto gesetzt und ist nicht wählbar.
+
+Feld-Konten können ausschließlich:
+  - ihre eigenen Stammdaten + aktive Projekte lesen (dieses Modul)
+  - einen Bautagesbericht anlegen (dieses Modul)
+Alle CRM-Daten-Router weisen die Rolle "feld" ab (require_buero).
 """
 
-import hmac
-import os
+from fastapi import APIRouter, Depends, HTTPException
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-
+from auth import get_current_user
 from database import get_db
-from models import Bautagesbericht, Kunde, Personal, Projekt
+from models import Bautagesbericht, Benutzer, Kunde, Personal, Projekt
 from schemas import BautagesberichtCreate
 
 router = APIRouter(prefix="/feld")
 
-# Auf dem Server via docker-compose/.env gesetzt; der Fallback gilt nur
-# für lokale Entwicklung ohne Docker.
-FELD_KEY = os.environ.get("FELD_KEY", "dev-feld")
-
-# Nur Baustellen-Personal darf über den Feld-Link Berichte senden.
-# Abgleich gegen das Positions-Feld der Personal-Stammdaten
-# (Teilstring, case-insensitive — "Oberpolier" zählt also auch).
+# Nur Baustellen-Personal darf Berichte senden. Abgleich gegen das
+# Positions-Feld (Teilstring, case-insensitive — "Oberpolier" zählt).
 FELD_QUALIFIKATIONEN = ("polier", "vorarbeiter", "facharbeiter", "bauhelfer")
 
 
@@ -33,25 +30,27 @@ def ist_feldpersonal(p: Personal) -> bool:
     return any(q in position for q in FELD_QUALIFIKATIONEN)
 
 
-def pruefe_key(key: str = Query(default="")) -> None:
-    if not FELD_KEY or not hmac.compare_digest(key, FELD_KEY):
-        raise HTTPException(status_code=403, detail="Ungültiger Feld-Link")
+def _eigene_person(benutzer: Benutzer, db) -> Personal | None:
+    if not benutzer.personal_id:
+        return None
+    return db.query(Personal).filter(Personal.id == benutzer.personal_id).first()
 
 
-@router.get("/stammdaten", dependencies=[Depends(pruefe_key)])
-async def feld_stammdaten(db=Depends(get_db)):
-    """Minimale Listen für das Melde-Formular: wer + welches Projekt.
+@router.get("/stammdaten")
+async def feld_stammdaten(
+    benutzer: Benutzer = Depends(get_current_user), db=Depends(get_db)
+):
+    """Eigene Person + aktive Projekte für das Melde-Formular."""
+    person = _eigene_person(benutzer, db)
+    ich = None
+    if person:
+        ich = {
+            "id": person.id,
+            "vorname": person.vorname,
+            "nachname": person.nachname,
+            "berechtigt": ist_feldpersonal(person),
+        }
 
-    Personal ist auf Baustellen-Qualifikationen gefiltert — Büro-Personal
-    erscheint nicht in der "Wer bist du?"-Auswahl.
-    """
-    personal = [
-        {"id": p.id, "vorname": p.vorname, "nachname": p.nachname}
-        for p in db.query(Personal).order_by(Personal.nachname, Personal.vorname)
-        if ist_feldpersonal(p)
-    ]
-    # Kunde je Projekt mitliefern — wird im Formular und Bericht angezeigt,
-    # ohne dass der Ausfüllende ihn eintippen muss.
     kunden = {k.id: k.name for k in db.query(Kunde)}
     projekte = [
         {
@@ -64,27 +63,39 @@ async def feld_stammdaten(db=Depends(get_db)):
         .filter(Projekt.status != "Abgeschlossen")
         .order_by(Projekt.name)
     ]
-    return {"personal": personal, "projekte": projekte}
+    return {"ich": ich, "projekte": projekte}
 
 
-@router.post("/bautagesberichte", status_code=201, dependencies=[Depends(pruefe_key)])
-async def feld_bautagesbericht(b: BautagesberichtCreate, db=Depends(get_db)):
-    """Bericht von der Baustelle — landet als normaler Bautagesbericht im CRM.
-
-    Serverseitig erzwungen: Der Ersteller muss existieren und eine
-    Baustellen-Qualifikation haben (nicht nur die Liste im Formular filtern).
-    """
-    ersteller = db.query(Personal).filter(Personal.id == b.ersteller_id).first()
-    if not ersteller or not ist_feldpersonal(ersteller):
+@router.post("/bautagesberichte", status_code=201)
+async def feld_bautagesbericht(
+    b: BautagesberichtCreate,
+    benutzer: Benutzer = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Bericht von der Baustelle — Ersteller ist immer das eigene Konto."""
+    person = _eigene_person(benutzer, db)
+    if not person:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Dein Konto ist keinem Mitarbeiter zugeordnet — "
+                "bitte im Büro melden."
+            ),
+        )
+    if not ist_feldpersonal(person):
         raise HTTPException(
             status_code=403,
             detail=(
                 "Nur Baustellen-Personal (Polier, Vorarbeiter, Facharbeiter, "
-                "Bauhelfer) darf Berichte über den Feld-Link senden."
+                "Bauhelfer) darf Berichte über das Feld-Formular senden."
             ),
         )
-    neu = Bautagesbericht(**b.model_dump())
-    neu.erstellt_von = "feld-link"
+
+    daten = b.model_dump()
+    # Ersteller kommt IMMER aus dem Login — was der Client schickt, zählt nicht.
+    daten["ersteller_id"] = person.id
+    neu = Bautagesbericht(**daten)
+    neu.erstellt_von = f"feld:{benutzer.benutzername}"
     db.add(neu)
     db.commit()
     db.refresh(neu)

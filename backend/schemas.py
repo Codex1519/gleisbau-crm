@@ -189,7 +189,9 @@ class DokumentUpdate(BaseModel):
 # ---------- Bautagesberichte ----------
 class BautagesberichtCreate(BaseModel):
     projekt_id: int
-    ersteller_id: int
+    # Im CRM Pflicht (Formular erzwingt es); beim Feld-Formular setzt der
+    # Server den Ersteller aus dem angemeldeten Konto.
+    ersteller_id: int | None = None
     datum: date
     wetter: str | None = None
     temperatur: int | None = None

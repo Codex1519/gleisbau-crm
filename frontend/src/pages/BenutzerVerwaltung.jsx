@@ -14,6 +14,7 @@ const ROLLEN = [
   { value: 'admin', label: 'Admin' },
   { value: 'bauleiter', label: 'Bauleiter' },
   { value: 'sachbearbeiter', label: 'Sachbearbeiter' },
+  { value: 'feld', label: 'Feld (nur Bautagesberichte)' },
 ]
 
 const NEUER_BENUTZER = {

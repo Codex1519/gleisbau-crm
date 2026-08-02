@@ -3,7 +3,9 @@
 Rollen:
   admin          — alles, inkl. Benutzerverwaltung
   bauleiter      — alle Module
-  sachbearbeiter — alle Module
+  sachbearbeiter — alle Module (außer Löschen)
+  feld           — NUR das Melde-Formular (/feld/*): Bautagesberichte
+                   ausfüllen und senden. Kein CRM-Zugriff.
 
 Feinere Rechte pro Modul lassen sich später über require_rolle() ergänzen.
 """
@@ -26,7 +28,7 @@ from models import Benutzer
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-nur-lokal")
 TOKEN_GUELTIGKEIT = timedelta(hours=12)
 
-ROLLEN = ("admin", "bauleiter", "sachbearbeiter")
+ROLLEN = ("admin", "bauleiter", "sachbearbeiter", "feld")
 
 # Wer bearbeitet gerade? Wird pro Request in get_current_user gesetzt und
 # vom Session-Event (unten) in erstellt_von/geaendert_von geschrieben.
@@ -104,6 +106,16 @@ def require_loeschen(benutzer: Benutzer = Depends(get_current_user)) -> Benutzer
     if benutzer.rolle == "sachbearbeiter":
         raise HTTPException(
             status_code=403, detail="Sachbearbeiter dürfen keine Einträge löschen"
+        )
+    return benutzer
+
+
+def require_buero(benutzer: Benutzer = Depends(get_current_user)) -> Benutzer:
+    """CRM-Datenmodule: Feld-Konten haben hier keinen Zutritt."""
+    if benutzer.rolle == "feld":
+        raise HTTPException(
+            status_code=403,
+            detail="Feld-Konten haben nur Zugriff auf das Melde-Formular",
         )
     return benutzer
 

@@ -2,7 +2,7 @@
 print("main.py wird geladen")
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from auth import get_current_user
+from auth import require_buero
 from sqlalchemy import text, inspect
 from database import Base, engine
 import models
@@ -128,11 +128,12 @@ app.add_middleware(
 # Auth-Router: /auth/login ist öffentlich, /benutzer/* prüft Admin selbst
 app.include_router(benutzer_router.router)
 
-# Feld-Zugang: kein JWT — schützt sich selbst über den FELD_KEY-Link-Code
+# Feld-Formular: Login erforderlich (auch für Feld-Konten), prüft intern
 app.include_router(feld.router)
 
-# Alle Daten-Router nur mit gültigem Login erreichbar
-geschuetzt = [Depends(get_current_user)]
+# CRM-Daten-Router: nur Büro-Rollen (admin/bauleiter/sachbearbeiter) —
+# Feld-Konten werden hier abgewiesen
+geschuetzt = [Depends(require_buero)]
 app.include_router(kunden.router, dependencies=geschuetzt)
 app.include_router(maschinen.router, dependencies=geschuetzt)
 app.include_router(personal.router, dependencies=geschuetzt)

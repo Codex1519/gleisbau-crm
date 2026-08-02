@@ -52,10 +52,12 @@ const CUSTOM_NEU = {
 const KEINE_DETAIL_ROUTE = new Set(['zeiterfassungen'])
 
 // Nur eingeloggte Benutzer — sonst zur Login-Seite.
+// Feld-Konten gehören nicht ins CRM: direkt zum Melde-Formular.
 function RequireAuth({ children }) {
   const { benutzer, laedt } = useAuth()
   if (laedt) return <LadeBlock text="Anmeldung wird geprüft…" />
   if (!benutzer) return <Navigate to="/login" replace />
+  if (benutzer.rolle === 'feld') return <Navigate to="/melden" replace />
   return children
 }
 

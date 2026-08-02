@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { API_BASE } from '../api'
+import { API_BASE, getToken } from '../api'
+import { useAuth } from '../contexts/AuthContext'
 import {
   STANDARD_ROLLEN,
   serializePersonalAnwesend,
@@ -11,18 +11,19 @@ import { formatStunden, heuteISO } from '../lib/zeiterfassung'
 import { Spinner } from '../components/Spinner'
 
 // Feld-Formular: Bautagesbericht von der Baustelle, Zasta-Stil.
-// Eine Frage pro Bildschirm, Pflichtfelder blockieren "Weiter".
-//
-// Bewusst KEINE Personen-Speicherung: Jeder Aufruf startet neutral bei
-// "Wer bist du?". Lokal gemerkt wird ausschließlich der Link-Code
-// (damit der Start vom Homescreen ohne Query-Parameter funktioniert) —
-// der identifiziert das Gerät, nie eine Person.
+// Zugang über persönliches Login (Rolle "feld") — der Ersteller steht
+// damit fest und wird serverseitig gesetzt; niemand kann für einen
+// anderen melden. Das Gerät bleibt nach dem ersten Login angemeldet.
 
-const KEY_STORAGE = 'gleisbau_feld_key'
-
-function feldFetch(pfad, key, options) {
-  const sep = pfad.includes('?') ? '&' : '?'
-  return fetch(`${API_BASE}${pfad}${sep}key=${encodeURIComponent(key)}`, options)
+function feldFetch(pfad, options = {}) {
+  const token = getToken()
+  return fetch(`${API_BASE}${pfad}`, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
 }
 
 // "07:30" -> Minuten seit Mitternacht
@@ -33,20 +34,37 @@ function zeitZuMinuten(hhmm) {
   return h * 60 + m
 }
 
+const LEERES_FORMULAR = () => ({
+  projekt_id: null,
+  datum: heuteISO(),
+  ort: '',
+  wetter: '',
+  temperatur: '',
+  von: '',
+  bis: '',
+  pause: '30',
+  arbeiten: '',
+  counts: Object.fromEntries(STANDARD_ROLLEN.map((r) => [r, 0])),
+  extra: [],
+  maschinen: '',
+  material: '',
+  problemeJa: null,
+  behinderungen: '',
+  vorkommnisse: '',
+  fortschritt: 0,
+  bemerkungen: '',
+  sigAuftragnehmer: '',
+  sigAuftraggeber: '',
+  agNichtVorOrt: false,
+  sigDatum: heuteISO(),
+})
+
 export function Melden() {
-  const [searchParams] = useSearchParams()
+  const { benutzer, laedt, login, logout } = useAuth()
 
-  const key = useMemo(() => {
-    const ausUrl = searchParams.get('key')
-    if (ausUrl) {
-      localStorage.setItem(KEY_STORAGE, ausUrl)
-      return ausUrl
-    }
-    return localStorage.getItem(KEY_STORAGE) || ''
-  }, [searchParams])
-
-  // Alte Geräte: früher gespeicherte Personen-Auswahl entfernen
+  // Altlasten des früheren Link-Code-Zugangs aufräumen
   useEffect(() => {
+    localStorage.removeItem('gleisbau_feld_key')
     localStorage.removeItem('gleisbau_feld_wer')
   }, [])
 
@@ -56,34 +74,14 @@ export function Melden() {
   const [sende, setSende] = useState(false)
   const [sendeFehler, setSendeFehler] = useState(null)
   const [fertig, setFertig] = useState(false)
+  const [a, setA] = useState(LEERES_FORMULAR)
 
-  const [a, setA] = useState(() => ({
-    ersteller_id: null,
-    projekt_id: null,
-    datum: heuteISO(),
-    ort: '',
-    wetter: '',
-    temperatur: '',
-    von: '',
-    bis: '',
-    pause: '30',
-    arbeiten: '',
-    counts: Object.fromEntries(STANDARD_ROLLEN.map((r) => [r, 0])),
-    extra: [],
-    maschinen: '',
-    material: '',
-    problemeJa: null,
-    behinderungen: '',
-    vorkommnisse: '',
-    fortschritt: 0,
-    bemerkungen: '',
-    sigAuftragnehmer: '',
-    sigAuftraggeber: '',
-    agNichtVorOrt: false,
-    sigDatum: heuteISO(),
-  }))
+  // Login-Screen
+  const [loginName, setLoginName] = useState('')
+  const [loginPasswort, setLoginPasswort] = useState('')
+  const [loginFehler, setLoginFehler] = useState(null)
+  const [loggtEin, setLoggtEin] = useState(false)
 
-  // Merkt sich die letzte Interaktion — Basis für den Auto-Reset unten.
   const letzteAktivitaet = useRef(Date.now())
 
   function set(feld, wert) {
@@ -91,65 +89,34 @@ export function Melden() {
     setA((alt) => ({ ...alt, [feld]: wert }))
   }
 
+  // Stammdaten laden, sobald angemeldet
   useEffect(() => {
-    if (!key) {
-      setLadeFehler('kein-key')
+    if (!benutzer) {
+      setStammdaten(null)
       return
     }
-    feldFetch('/feld/stammdaten', key)
+    setLadeFehler(null)
+    feldFetch('/feld/stammdaten')
       .then(async (r) => {
-        if (r.status === 403) throw new Error('key')
         if (!r.ok) throw new Error('server')
         setStammdaten(await r.json())
       })
-      .catch((e) =>
-        setLadeFehler(e.message === 'key' ? 'kein-key' : 'server')
-      )
-  }, [key])
+      .catch(() => setLadeFehler('server'))
+  }, [benutzer])
 
-  // Handys frieren Browser-Tabs ein: Wer den Link "neu öffnet", bekommt
-  // oft den alten Tab von gestern zurück — samt alter Auswahl. Darum:
-  // Formular zurücksetzen, wenn die Seite aus dem Cache zurückkommt oder
-  // nach längerer Pause (>30 Min.) wieder sichtbar wird. Kurzes
-  // App-Wechseln (Nachricht checken) zerstört den Bericht dagegen nicht.
+  // Eingefrorene Tabs: Formular zurücksetzen bei Restore oder nach
+  // >30 Min. Pause — das Login bleibt bestehen (gewollt), nur die
+  // Formular-Eingaben starten frisch.
   useEffect(() => {
     const PAUSE_RESET_MS = 30 * 60 * 1000
-
     function aufAnfang() {
       letzteAktivitaet.current = Date.now()
       setFertig(false)
       setSchritt(0)
       setSendeFehler(null)
-      setA((alt) => ({
-        ...alt,
-        ersteller_id: null,
-        projekt_id: null,
-        datum: heuteISO(),
-        ort: '',
-        wetter: '',
-        temperatur: '',
-        von: '',
-        bis: '',
-        pause: '30',
-        arbeiten: '',
-        counts: Object.fromEntries(STANDARD_ROLLEN.map((r) => [r, 0])),
-        extra: [],
-        maschinen: '',
-        material: '',
-        problemeJa: null,
-        behinderungen: '',
-        vorkommnisse: '',
-        fortschritt: 0,
-        bemerkungen: '',
-        sigAuftragnehmer: '',
-        sigAuftraggeber: '',
-        agNichtVorOrt: false,
-        sigDatum: heuteISO(),
-      }))
+      setA(LEERES_FORMULAR())
     }
-
     function beiPageshow(e) {
-      // persisted = aus dem Back-Forward-Cache wiederhergestellt
       if (e.persisted) aufAnfang()
     }
     function beiSichtbarkeit() {
@@ -160,7 +127,6 @@ export function Melden() {
         aufAnfang()
       }
     }
-
     window.addEventListener('pageshow', beiPageshow)
     document.addEventListener('visibilitychange', beiSichtbarkeit)
     return () => {
@@ -169,6 +135,32 @@ export function Melden() {
     }
   }, [])
 
+  async function einloggen(e) {
+    e.preventDefault()
+    setLoginFehler(null)
+    setLoggtEin(true)
+    try {
+      await login(loginName.trim(), loginPasswort)
+      setLoginPasswort('')
+    } catch (err) {
+      setLoginFehler(
+        err.message.includes('401') || err.message.includes('falsch')
+          ? 'Benutzername oder Passwort falsch.'
+          : 'Anmeldung fehlgeschlagen — keine Verbindung?'
+      )
+    } finally {
+      setLoggtEin(false)
+    }
+  }
+
+  function abmelden() {
+    logout()
+    setStammdaten(null)
+    setSchritt(0)
+    setFertig(false)
+    setA(LEERES_FORMULAR())
+  }
+
   const personalGesamt =
     STANDARD_ROLLEN.reduce((s, r) => s + (Number(a.counts[r]) || 0), 0) +
     a.extra.reduce(
@@ -176,7 +168,6 @@ export function Melden() {
       0
     )
 
-  // Netto-Arbeitszeit in Minuten (Bis − Von − Pause)
   const nettoMinuten = useMemo(() => {
     const von = zeitZuMinuten(a.von)
     const bis = zeitZuMinuten(a.bis)
@@ -184,15 +175,8 @@ export function Melden() {
     return bis - von - (Number(a.pause) || 0)
   }, [a.von, a.bis, a.pause])
 
-  // ---------- Schritte ----------
+  // ---------- Schritte (Ersteller kommt aus dem Login) ----------
   const schritte = [
-    {
-      id: 'wer',
-      frage: 'Wer bist du?',
-      hinweis:
-        'Tippe deinen Namen an. Die Liste zeigt alle Baustellen-Mitarbeiter — es ist nichts vorausgewählt.',
-      valid: () => !!a.ersteller_id,
-    },
     {
       id: 'projekt',
       frage: 'Auf welcher Baustelle warst du heute?',
@@ -297,7 +281,6 @@ export function Melden() {
     try {
       const payload = {
         projekt_id: a.projekt_id,
-        ersteller_id: a.ersteller_id,
         datum: a.datum,
         ort: a.ort.trim(),
         arbeitszeit_von: a.von,
@@ -321,12 +304,15 @@ export function Melden() {
         payload.besondere_vorkommnisse = a.vorkommnisse.trim()
       if (a.bemerkungen.trim()) payload.bemerkungen = a.bemerkungen.trim()
 
-      const r = await feldFetch('/feld/bautagesberichte', key, {
+      const r = await feldFetch('/feld/bautagesberichte', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      if (!r.ok) throw new Error(`Senden fehlgeschlagen (${r.status})`)
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}))
+        throw new Error(body.detail || `Senden fehlgeschlagen (${r.status})`)
+      }
       setFertig(true)
     } catch (e) {
       setSendeFehler(
@@ -340,50 +326,63 @@ export function Melden() {
   }
 
   function neuerBericht() {
-    setA({
-      ersteller_id: null,
-      projekt_id: null,
-      datum: heuteISO(),
-      ort: '',
-      wetter: '',
-      temperatur: '',
-      von: '',
-      bis: '',
-      pause: '30',
-      arbeiten: '',
-      counts: Object.fromEntries(STANDARD_ROLLEN.map((r) => [r, 0])),
-      extra: [],
-      maschinen: '',
-      material: '',
-      problemeJa: null,
-      behinderungen: '',
-      vorkommnisse: '',
-      fortschritt: 0,
-      bemerkungen: '',
-      sigAuftragnehmer: '',
-      sigAuftraggeber: '',
-      agNichtVorOrt: false,
-      sigDatum: heuteISO(),
-    })
+    setA(LEERES_FORMULAR())
     setFertig(false)
     setSchritt(0)
   }
 
   // ---------- Sonderscreens ----------
-  if (ladeFehler === 'kein-key') {
+  if (laedt) {
     return (
       <MeldenRahmen>
         <div className="melden-zentriert">
-          <div className="melden-emoji">🔒</div>
-          <h1>Ungültiger Link</h1>
-          <p>
-            Dieser Link funktioniert nicht (mehr). Bitte den aktuellen
-            Berichts-Link vom Bauleiter anfordern.
-          </p>
+          <Spinner groesse="lg" />
+          <p>Lade…</p>
         </div>
       </MeldenRahmen>
     )
   }
+
+  if (!benutzer) {
+    return (
+      <MeldenRahmen>
+        <form className="melden-login" onSubmit={einloggen}>
+          <div className="melden-emoji">👷</div>
+          <h1>Bautagesbericht</h1>
+          <p>Melde dich einmal an — dein Handy bleibt angemeldet.</p>
+          {loginFehler && <div className="melden-fehler">{loginFehler}</div>}
+          <input
+            type="text"
+            className="melden-datum"
+            placeholder="Benutzername"
+            autoComplete="username"
+            autoCapitalize="none"
+            value={loginName}
+            onChange={(e) => setLoginName(e.target.value)}
+          />
+          <input
+            type="password"
+            className="melden-datum"
+            placeholder="Passwort"
+            autoComplete="current-password"
+            value={loginPasswort}
+            onChange={(e) => setLoginPasswort(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary melden-weiter"
+            disabled={loggtEin || !loginName.trim() || !loginPasswort}
+          >
+            {loggtEin ? <Spinner /> : 'Anmelden'}
+          </button>
+          <p className="melden-login-hilfe">
+            Kein Zugang? Benutzername und Passwort bekommst du vom Büro.
+          </p>
+        </form>
+      </MeldenRahmen>
+    )
+  }
+
   if (ladeFehler === 'server') {
     return (
       <MeldenRahmen>
@@ -411,6 +410,44 @@ export function Melden() {
       </MeldenRahmen>
     )
   }
+
+  const ich = stammdaten.ich
+  if (!ich) {
+    return (
+      <MeldenRahmen>
+        <div className="melden-zentriert">
+          <div className="melden-emoji">🪪</div>
+          <h1>Konto nicht zugeordnet</h1>
+          <p>
+            Dein Konto „{benutzer.benutzername}" ist keinem Mitarbeiter
+            zugeordnet. Bitte im Büro melden.
+          </p>
+          <button className="btn btn-primary melden-weiter" onClick={abmelden}>
+            Abmelden
+          </button>
+        </div>
+      </MeldenRahmen>
+    )
+  }
+  if (!ich.berechtigt) {
+    return (
+      <MeldenRahmen>
+        <div className="melden-zentriert">
+          <div className="melden-emoji">🚧</div>
+          <h1>Keine Berechtigung</h1>
+          <p>
+            Berichte dürfen nur Polier, Vorarbeiter, Facharbeiter und
+            Bauhelfer senden. Deine Position im CRM passt nicht — bitte im
+            Büro melden.
+          </p>
+          <button className="btn btn-primary melden-weiter" onClick={abmelden}>
+            Abmelden
+          </button>
+        </div>
+      </MeldenRahmen>
+    )
+  }
+
   if (fertig) {
     return (
       <MeldenRahmen>
@@ -429,41 +466,11 @@ export function Melden() {
     )
   }
 
-  // ---------- Schritt-Inhalte ----------
-  const person = stammdaten.personal.find((p) => p.id === a.ersteller_id)
+  const ichName = [ich.vorname, ich.nachname].filter(Boolean).join(' ')
   const projekt = stammdaten.projekte.find((p) => p.id === a.projekt_id)
 
   function inhalt() {
     switch (aktuell.id) {
-      case 'wer':
-        return (
-          <div className="melden-liste">
-            {stammdaten.personal.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`melden-wahl mit-radio${
-                  a.ersteller_id === p.id ? ' aktiv' : ''
-                }`}
-                onClick={() => {
-                  set('ersteller_id', p.id)
-                  setTimeout(() => setSchritt((s) => s + 1), 200)
-                }}
-              >
-                <span className="radio" aria-hidden="true" />
-                {[p.vorname, p.nachname].filter(Boolean).join(' ')}
-              </button>
-            ))}
-            {stammdaten.personal.length === 0 && (
-              <p className="melden-leer">
-                Keine Baustellen-Mitarbeiter gefunden. Es erscheinen nur
-                Personen, deren Position im CRM Polier, Vorarbeiter,
-                Facharbeiter oder Bauhelfer ist — bitte im Büro melden.
-              </p>
-            )}
-          </div>
-        )
-
       case 'projekt':
         return (
           <div className="melden-liste">
@@ -471,7 +478,7 @@ export function Melden() {
               <button
                 key={p.id}
                 type="button"
-                className={`melden-wahl${
+                className={`melden-wahl mit-radio${
                   a.projekt_id === p.id ? ' aktiv' : ''
                 }`}
                 onClick={() => {
@@ -479,10 +486,13 @@ export function Melden() {
                   setTimeout(() => setSchritt((s) => s + 1), 200)
                 }}
               >
-                {p.name}
-                {p.kunde && (
-                  <span className="melden-wahl-sub">Kunde: {p.kunde}</span>
-                )}
+                <span className="radio" aria-hidden="true" />
+                <span>
+                  {p.name}
+                  {p.kunde && (
+                    <span className="melden-wahl-sub">Kunde: {p.kunde}</span>
+                  )}
+                </span>
               </button>
             ))}
             {stammdaten.projekte.length === 0 && (
@@ -881,13 +891,7 @@ export function Melden() {
             <dl>
               <div>
                 <dt>Wer</dt>
-                <dd>
-                  {person
-                    ? [person.vorname, person.nachname]
-                        .filter(Boolean)
-                        .join(' ')
-                    : '—'}
-                </dd>
+                <dd>{ichName}</dd>
               </div>
               <div>
                 <dt>Projekt</dt>
@@ -1004,6 +1008,15 @@ export function Melden() {
           {schritt + 1}/{schritte.length}
         </span>
       </header>
+
+      <div className="melden-benutzer">
+        <span>
+          👷 Angemeldet: <strong>{ichName}</strong>
+        </span>
+        <button type="button" onClick={abmelden}>
+          Abmelden
+        </button>
+      </div>
 
       <div className="melden-inhalt">
         <h1 className="melden-frage">{aktuell.frage}</h1>
