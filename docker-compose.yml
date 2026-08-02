@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=gleisbau
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD in .env setzen}
+      - POSTGRES_DB=gleisbau
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gleisbau -d gleisbau"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      # .env auf dem Server: JWT_SECRET, POSTGRES_PASSWORD, FELD_KEY (siehe DEPLOY.md)
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET in .env setzen}
+      - DATABASE_URL=postgresql+psycopg2://gleisbau:${POSTGRES_PASSWORD}@db:5432/gleisbau
+      - FELD_KEY=${FELD_KEY:?FELD_KEY in .env setzen}
+    depends_on:
+      db:
+        condition: service_healthy
+    # bewusst kein ports-Mapping: nur intern über nginx erreichbar
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg-data:

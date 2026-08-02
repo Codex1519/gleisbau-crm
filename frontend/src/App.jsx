@@ -7,6 +7,7 @@ import { SearchProvider } from './contexts/SearchContext'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { Login } from './pages/Login'
+import { Melden } from './pages/Melden'
 import { BenutzerVerwaltung } from './pages/BenutzerVerwaltung'
 import { PasswortAendern } from './pages/PasswortAendern'
 import { Einstellungen } from './pages/Einstellungen'
@@ -73,6 +74,7 @@ export default function App() {
       <SearchProvider>
         <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/melden" element={<Melden />} />
         <Route
           element={
             <RequireAuth>

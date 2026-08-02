@@ -1,7 +1,8 @@
 # FastAPI Framework importieren
 print("main.py wird geladen")
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from auth import get_current_user
 from sqlalchemy import text, inspect
 from database import Base, engine
 import models
@@ -16,6 +17,8 @@ from routers import (
     zeiterfassungen,
     dokumente,
     bautagesberichte,
+    benutzer as benutzer_router,
+    feld,
 )
 
 # Alle Tabellen in einer Datenbank erstellen
@@ -88,6 +91,18 @@ def fuehre_migrationen_aus() -> None:
         if result.rowcount > 0:
             print(f"Migration: {result.rowcount} Projekt-Status auf 'Anfrage' gesetzt")
 
+    # v0.7: Audit-Spalten auf allen Tabellen (wer hat angelegt/geändert?)
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for tabelle in inspector.get_table_names():
+            vorhanden = {c["name"] for c in inspector.get_columns(tabelle)}
+            for spalte in ("erstellt_von", "geaendert_von"):
+                if spalte not in vorhanden:
+                    conn.execute(
+                        text(f"ALTER TABLE {tabelle} ADD COLUMN {spalte} VARCHAR(50)")
+                    )
+                    print(f"Migration: Spalte '{spalte}' zu {tabelle} hinzugefügt")
+
 
 fuehre_migrationen_aus()
 
@@ -102,16 +117,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(kunden.router)
-app.include_router(maschinen.router)
-app.include_router(personal.router)
-app.include_router(projekte.router)
-app.include_router(ansprechpartner.router)
-app.include_router(notfallkontakte.router)
-app.include_router(qualifikationen.router)
-app.include_router(zeiterfassungen.router)
-app.include_router(dokumente.router)
-app.include_router(bautagesberichte.router)
+# Auth-Router: /auth/login ist öffentlich, /benutzer/* prüft Admin selbst
+app.include_router(benutzer_router.router)
+
+# Feld-Zugang: kein JWT — schützt sich selbst über den FELD_KEY-Link-Code
+app.include_router(feld.router)
+
+# Alle Daten-Router nur mit gültigem Login erreichbar
+geschuetzt = [Depends(get_current_user)]
+app.include_router(kunden.router, dependencies=geschuetzt)
+app.include_router(maschinen.router, dependencies=geschuetzt)
+app.include_router(personal.router, dependencies=geschuetzt)
+app.include_router(projekte.router, dependencies=geschuetzt)
+app.include_router(ansprechpartner.router, dependencies=geschuetzt)
+app.include_router(notfallkontakte.router, dependencies=geschuetzt)
+app.include_router(qualifikationen.router, dependencies=geschuetzt)
+app.include_router(zeiterfassungen.router, dependencies=geschuetzt)
+app.include_router(dokumente.router, dependencies=geschuetzt)
+app.include_router(bautagesberichte.router, dependencies=geschuetzt)
+
+
+def erstelle_admin_falls_leer() -> None:
+    """Beim ersten Start: Admin-Konto anlegen (Passwort danach ändern!)."""
+    from auth import hash_passwort
+    from database import Session
+
+    db = Session()
+    try:
+        if db.query(models.Benutzer).count() == 0:
+            db.add(
+                models.Benutzer(
+                    benutzername="admin",
+                    passwort_hash=hash_passwort("gleisbau2026"),
+                    rolle="admin",
+                    aktiv=1,
+                )
+            )
+            db.commit()
+            print("Admin-Konto angelegt: admin / gleisbau2026 — bitte Passwort ändern!")
+    finally:
+        db.close()
+
+
+erstelle_admin_falls_leer()
 
 
 @app.get("/")
