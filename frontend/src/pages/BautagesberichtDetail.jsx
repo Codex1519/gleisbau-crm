@@ -60,6 +60,7 @@ export function BautagesberichtDetail() {
   const [loesche, setLoesche] = useState(false)
 
   const [kunden, setKunden] = useState([])
+  const [alleBerichte, setAlleBerichte] = useState([])
 
   useEffect(() => {
     setLade(true)
@@ -70,12 +71,14 @@ export function BautagesberichtDetail() {
       api.list('projekte'),
       api.list('personal'),
       api.list('kunden'),
+      api.list('bautagesberichte'),
     ])
-      .then(([b, pr, pers, k]) => {
+      .then(([b, pr, pers, k, alle]) => {
         setBericht(b)
         setProjekte(pr)
         setPersonal(pers)
         setKunden(k)
+        setAlleBerichte(alle)
       })
       .catch((e) => setFehler(e.message))
       .finally(() => setLade(false))
@@ -139,6 +142,18 @@ export function BautagesberichtDetail() {
     projekt && projekt.kunden_id
       ? kunden.find((k) => k.id === projekt.kunden_id)
       : null
+
+  // Zusammenhängende Montage-Berichte (gleiches Projekt + gleiche Montage)
+  const montageTeile = useMemo(() => {
+    if (!bericht?.montage) return []
+    return alleBerichte
+      .filter(
+        (b) =>
+          b.montage === bericht.montage &&
+          b.projekt_id === bericht.projekt_id
+      )
+      .sort((x, y) => String(x.datum || '').localeCompare(String(y.datum || '')))
+  }, [alleBerichte, bericht])
 
   // Netto-Arbeitszeit aus Von/Bis/Pause ("07:00"–"17:00" − 30 min)
   const arbeitszeitText = (() => {
@@ -261,6 +276,13 @@ export function BautagesberichtDetail() {
                   ? personalModul.displayName(ersteller)
                   : 'Ersteller unbekannt'}
                 {kunde && <> · Kunde: {kunde.name}</>}
+                {bericht.montage && montageTeile.length > 0 && (
+                  <>
+                    {' '}· Montage „{bericht.montage}" — Bericht{' '}
+                    {montageTeile.findIndex((t) => t.id === bericht.id) + 1}{' '}
+                    von {montageTeile.length}
+                  </>
+                )}
               </div>
             </div>
             <div className="dok-meta">
@@ -382,6 +404,31 @@ export function BautagesberichtDetail() {
           {hatInhalt(bericht.bemerkungen) && (
             <Sektion titel="Bemerkungen">
               <DokFeld titel="" wert={bericht.bemerkungen} />
+            </Sektion>
+          )}
+
+          {bericht.montage && montageTeile.length > 1 && (
+            <Sektion
+              titel={`Montage „${bericht.montage}"`}
+              count={montageTeile.length}
+            >
+              <div className="montage-teile">
+                {montageTeile.map((t, i) => (
+                  <Link
+                    key={t.id}
+                    to={`/bautagesberichte/${t.id}`}
+                    className={`montage-teil${
+                      t.id === bericht.id ? ' aktuell' : ''
+                    }`}
+                  >
+                    <span className="nr">Tag {i + 1}</span>
+                    <span>{t.datum || `#${t.id}`}</span>
+                    <span className="pct">
+                      {Number(t.baufortschritt) || 0}%
+                    </span>
+                  </Link>
+                ))}
+              </div>
             </Sektion>
           )}
 

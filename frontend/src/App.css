@@ -2730,3 +2730,64 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   color: var(--text-muted);
   line-height: 1.5;
 }
+
+/* ---------- Benachrichtigungs-Badge (neue Bautagesberichte) ---------- */
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Montage-Gruppierung ---------- */
+tr.montage-zeile td:first-child {
+  padding-left: 28px;
+}
+.montage-teile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.montage-teil {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  color: var(--text);
+  font-size: 13px;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.montage-teil:hover {
+  border-color: var(--accent-soft-border);
+  background: var(--bg-hover);
+}
+.montage-teil.aktuell {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+.montage-teil .nr {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.montage-teil.aktuell .nr { color: var(--accent); }
+.montage-teil .pct {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

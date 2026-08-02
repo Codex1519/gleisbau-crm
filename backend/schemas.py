@@ -210,6 +210,7 @@ class BautagesberichtCreate(BaseModel):
     unterschrift_auftragnehmer: str | None = None
     unterschrift_auftraggeber: str | None = None
     unterschrift_datum: date | None = None
+    montage: str | None = None
 
 
 class BautagesberichtUpdate(BaseModel):
@@ -233,3 +234,4 @@ class BautagesberichtUpdate(BaseModel):
     unterschrift_auftragnehmer: str | None = None
     unterschrift_auftraggeber: str | None = None
     unterschrift_datum: date | None = None
+    montage: str | None = None

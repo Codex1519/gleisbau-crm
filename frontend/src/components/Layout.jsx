@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { MODULE } from '../modules'
 import {
   ModulIcon,
@@ -10,11 +11,39 @@ import {
 import { GlobalSearch } from './GlobalSearch'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { useSearchData } from '../contexts/SearchContext'
+
+const GESEHEN_KEY = 'gleisbau_berichte_gesehen'
 
 export function Layout() {
   const { benutzer, istAdmin, logout } = useAuth()
   const { toggle, istDunkel } = useTheme()
+  const { daten } = useSearchData()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Benachrichtigung: neue Bautagesberichte seit dem letzten Besuch der
+  // Übersicht (pro Browser gemerkt; Daten kommen aus dem 5-Minuten-Cache).
+  const [gesehen, setGesehen] = useState(() => {
+    const wert = localStorage.getItem(GESEHEN_KEY)
+    if (wert) return wert
+    // Erstbesuch: alles Bestehende gilt als gesehen
+    const jetzt = new Date().toISOString()
+    localStorage.setItem(GESEHEN_KEY, jetzt)
+    return jetzt
+  })
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/bautagesberichte')) {
+      const jetzt = new Date().toISOString()
+      localStorage.setItem(GESEHEN_KEY, jetzt)
+      setGesehen(jetzt)
+    }
+  }, [location.pathname, daten.bautagesberichte])
+
+  const neueBerichte = (daten.bautagesberichte || []).filter(
+    (b) => b.created_at && b.created_at > gesehen
+  ).length
 
   function abmelden() {
     logout()
@@ -63,6 +92,14 @@ export function Layout() {
                 >
                   <ModulIcon name={m.icon} className="icon nav-icon" />
                   <span>{m.label}</span>
+                  {m.key === 'bautagesberichte' && neueBerichte > 0 && (
+                    <span
+                      className="nav-badge"
+                      title={`${neueBerichte} neue Berichte seit deinem letzten Besuch`}
+                    >
+                      {neueBerichte}
+                    </span>
+                  )}
                 </NavLink>
               </li>
             ))}

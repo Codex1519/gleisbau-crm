@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import {
   STANDARD_ROLLEN,
   serializePersonalAnwesend,
+  parsePersonalAnwesend,
 } from '../components/PersonalAnwesendFeld'
 import { SignaturFeld } from '../components/SignaturFeld'
 import { WETTER_OPTIONEN } from '../lib/bautagesbericht'
@@ -51,6 +52,8 @@ function zeitZuMinuten(hhmm) {
 
 const LEERES_FORMULAR = () => ({
   projekt_id: null,
+  montageWahl: null, // null | 'keine' | 'neu' | 'bestehend'
+  montageName: '',
   datum: heuteISO(),
   ort: '',
   wetter: '',
@@ -248,6 +251,16 @@ export function Melden() {
       valid: () => !!a.projekt_id,
     },
     {
+      id: 'montage',
+      frage: 'Gehört der Bericht zu einer Montage?',
+      hinweis:
+        'Mehrtägige Einsätze zusammenfassen — beim Fortsetzen wird der Bericht vom Vortag vorausgefüllt.',
+      valid: () =>
+        a.montageWahl === 'keine' ||
+        a.montageWahl === 'bestehend' ||
+        (a.montageWahl === 'neu' && a.montageName.trim().length > 0),
+    },
+    {
       id: 'datum',
       frage: 'Für welchen Tag ist der Bericht?',
       valid: () => !!a.datum,
@@ -367,6 +380,7 @@ export function Melden() {
     if (a.problemeJa && a.vorkommnisse.trim())
       payload.besondere_vorkommnisse = a.vorkommnisse.trim()
     if (a.bemerkungen.trim()) payload.bemerkungen = a.bemerkungen.trim()
+    if (a.montageName.trim()) payload.montage = a.montageName.trim()
 
     try {
       const r = await feldFetch('/feld/bautagesberichte', {
@@ -560,7 +574,13 @@ export function Melden() {
                   a.projekt_id === p.id ? ' aktiv' : ''
                 }`}
                 onClick={() => {
-                  set('projekt_id', p.id)
+                  setA((alt) => ({
+                    ...alt,
+                    projekt_id: p.id,
+                    montageWahl: null,
+                    montageName: '',
+                  }))
+                  letzteAktivitaet.current = Date.now()
                   setTimeout(() => setSchritt((s) => s + 1), 200)
                 }}
               >
@@ -580,6 +600,99 @@ export function Melden() {
             )}
           </div>
         )
+
+      case 'montage': {
+        const montagen = projekt?.montagen || []
+        function fortsetzen(m) {
+          // Folgebericht: Vortages-Werte übernehmen (Tagesinhalte bleiben leer)
+          const geparst = parsePersonalAnwesend(m.vorlage?.personal_anwesend)
+          setA((alt) => ({
+            ...alt,
+            montageWahl: 'bestehend',
+            montageName: m.name,
+            ort: m.vorlage?.ort || alt.ort,
+            maschinen: m.vorlage?.maschinen_eingesetzt || alt.maschinen,
+            von: m.vorlage?.arbeitszeit_von || alt.von,
+            bis: m.vorlage?.arbeitszeit_bis || alt.bis,
+            pause:
+              m.vorlage?.pause_minuten != null
+                ? String(m.vorlage.pause_minuten)
+                : alt.pause,
+            fortschritt: Number(m.vorlage?.baufortschritt) || alt.fortschritt,
+            counts: geparst.counts,
+            extra: geparst.extra,
+          }))
+          letzteAktivitaet.current = Date.now()
+          setTimeout(() => setSchritt((s) => s + 1), 200)
+        }
+        return (
+          <div className="melden-liste">
+            <button
+              type="button"
+              className={`melden-wahl mit-radio${
+                a.montageWahl === 'keine' ? ' aktiv' : ''
+              }`}
+              onClick={() => {
+                setA((alt) => ({
+                  ...alt,
+                  montageWahl: 'keine',
+                  montageName: '',
+                }))
+                letzteAktivitaet.current = Date.now()
+                setTimeout(() => setSchritt((s) => s + 1), 200)
+              }}
+            >
+              <span className="radio" aria-hidden="true" />
+              Nein, einzelner Bericht
+            </button>
+
+            {montagen.map((m) => (
+              <button
+                key={m.name}
+                type="button"
+                className={`melden-wahl mit-radio${
+                  a.montageWahl === 'bestehend' && a.montageName === m.name
+                    ? ' aktiv'
+                    : ''
+                }`}
+                onClick={() => fortsetzen(m)}
+              >
+                <span className="radio" aria-hidden="true" />
+                <span>
+                  Montage „{m.name}" fortsetzen
+                  <span className="melden-wahl-sub">
+                    {m.anzahl} Bericht{m.anzahl === 1 ? '' : 'e'}
+                    {m.letzter_datum && ` · zuletzt ${m.letzter_datum}`} ·
+                    füllt den Bericht vom Vortag vor
+                  </span>
+                </span>
+              </button>
+            ))}
+
+            <button
+              type="button"
+              className={`melden-wahl mit-radio${
+                a.montageWahl === 'neu' ? ' aktiv' : ''
+              }`}
+              onClick={() => set('montageWahl', 'neu')}
+            >
+              <span className="radio" aria-hidden="true" />
+              Neue Montage starten
+            </button>
+
+            {a.montageWahl === 'neu' && (
+              <input
+                type="text"
+                className="melden-datum"
+                placeholder="Name der Montage, z. B. Weiche W23"
+                value={a.montageName}
+                autoFocus
+                onChange={(e) => set('montageName', e.target.value)}
+              />
+            )}
+          </div>
+        )
+      }
 
       case 'datum':
         return (
@@ -978,6 +1091,12 @@ export function Melden() {
                   {projekt?.kunde && ` · ${projekt.kunde}`}
                 </dd>
               </div>
+              {a.montageName && (
+                <div>
+                  <dt>Montage</dt>
+                  <dd>{a.montageName}</dd>
+                </div>
+              )}
               <div>
                 <dt>Datum</dt>
                 <dd>{a.datum}</dd>

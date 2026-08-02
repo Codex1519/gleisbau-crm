@@ -52,17 +52,65 @@ async def feld_stammdaten(
         }
 
     kunden = {k.id: k.name for k in db.query(Kunde)}
-    projekte = [
-        {
-            "id": p.id,
-            "name": p.name,
-            "status": p.status,
-            "kunde": kunden.get(p.kunden_id),
-        }
-        for p in db.query(Projekt)
+    projekte = []
+    for p in (
+        db.query(Projekt)
         .filter(Projekt.status != "Abgeschlossen")
         .order_by(Projekt.name)
-    ]
+    ):
+        # Laufende Montagen dieses Projekts: neueste zuerst, je Montage der
+        # letzte Bericht als Vorlage fürs Vorausfüllen des Folgetags.
+        montagen = []
+        gesehen = set()
+        for b in (
+            db.query(Bautagesbericht)
+            .filter(
+                Bautagesbericht.projekt_id == p.id,
+                Bautagesbericht.montage.isnot(None),
+                Bautagesbericht.montage != "",
+            )
+            .order_by(Bautagesbericht.datum.desc(), Bautagesbericht.id.desc())
+            .limit(100)
+        ):
+            if b.montage in gesehen:
+                continue
+            gesehen.add(b.montage)
+            anzahl = (
+                db.query(Bautagesbericht)
+                .filter(
+                    Bautagesbericht.projekt_id == p.id,
+                    Bautagesbericht.montage == b.montage,
+                )
+                .count()
+            )
+            montagen.append(
+                {
+                    "name": b.montage,
+                    "anzahl": anzahl,
+                    "letzter_datum": str(b.datum) if b.datum else None,
+                    "vorlage": {
+                        "ort": b.ort,
+                        "personal_anwesend": b.personal_anwesend,
+                        "maschinen_eingesetzt": b.maschinen_eingesetzt,
+                        "arbeitszeit_von": b.arbeitszeit_von,
+                        "arbeitszeit_bis": b.arbeitszeit_bis,
+                        "pause_minuten": b.pause_minuten,
+                        "baufortschritt": b.baufortschritt,
+                    },
+                }
+            )
+            if len(montagen) >= 5:
+                break
+
+        projekte.append(
+            {
+                "id": p.id,
+                "name": p.name,
+                "status": p.status,
+                "kunde": kunden.get(p.kunden_id),
+                "montagen": montagen,
+            }
+        )
     return {"ich": ich, "projekte": projekte}
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { findModul } from '../modules'
@@ -72,6 +72,28 @@ export function BautagesberichteListe() {
       String(b.datum || '').localeCompare(String(a.datum || ''))
     )
   }, [berichte, filterProjekt, von, bis])
+
+  // Montage-Berichte bündeln: zusammengehörige erscheinen als Block
+  // (Kopfzeile + alle Berichte untereinander) an der Position des
+  // neuesten Berichts; Einzelberichte bleiben chronologisch dazwischen.
+  const bloecke = useMemo(() => {
+    const gruppen = new Map() // "projektId||montage" -> Block
+    const result = []
+    for (const b of gefiltert) {
+      if (b.montage) {
+        const key = `${b.projekt_id}||${b.montage}`
+        if (!gruppen.has(key)) {
+          const block = { typ: 'gruppe', key, name: b.montage, projekt_id: b.projekt_id, berichte: [] }
+          gruppen.set(key, block)
+          result.push(block)
+        }
+        gruppen.get(key).berichte.push(b)
+      } else {
+        result.push({ typ: 'einzeln', bericht: b })
+      }
+    }
+    return result
+  }, [gefiltert])
 
   const istGefiltert = filterProjekt !== '' || von !== '' || bis !== ''
 
@@ -213,18 +235,46 @@ export function BautagesberichteListe() {
                 </tr>
               </thead>
               <tbody>
-                {gefiltert.map((b) => {
-                  const proj = projekteMap.get(Number(b.projekt_id))
-                  const pers = personalMap.get(Number(erstellerId(b)))
-                  const pct = Number(b.baufortschritt) || 0
-                  const vorschau =
-                    b.arbeiten_durchgefuehrt || b.bemerkungen || ''
-                  return (
-                    <tr
-                      key={b.id}
-                      className="zeile-klickbar"
-                      onClick={() => navigate(`/bautagesberichte/${b.id}`)}
-                    >
+                {bloecke.map((block) => {
+                  if (block.typ === 'gruppe') {
+                    const proj = projekteMap.get(Number(block.projekt_id))
+                    return (
+                      <Fragment key={block.key}>
+                        <tr className="group-row">
+                          <td colSpan={6}>
+                            Montage „{block.name}"
+                            {proj && ` — ${projekteModul.displayName(proj)}`}
+                            <span className="group-count">
+                              · {block.berichte.length} Bericht
+                              {block.berichte.length === 1 ? '' : 'e'}
+                            </span>
+                          </td>
+                        </tr>
+                        {block.berichte.map((b) => zeile(b, true))}
+                      </Fragment>
+                    )
+                  }
+                  return zeile(block.bericht, false)
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Sektion>
+    </div>
+  )
+
+  function zeile(b, inGruppe) {
+    const proj = projekteMap.get(Number(b.projekt_id))
+    const pers = personalMap.get(Number(erstellerId(b)))
+    const pct = Number(b.baufortschritt) || 0
+    const vorschau = b.arbeiten_durchgefuehrt || b.bemerkungen || ''
+    return (
+      <tr
+        key={b.id}
+        className={`zeile-klickbar${inGruppe ? ' montage-zeile' : ''}`}
+        onClick={() => navigate(`/bautagesberichte/${b.id}`)}
+      >
                       <td className="primary-cell">{b.datum || '—'}</td>
                       <td className="muted-cell">
                         {proj
@@ -268,14 +318,7 @@ export function BautagesberichteListe() {
                       >
                         {vorschau || '—'}
                       </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Sektion>
-    </div>
-  )
+      </tr>
+    )
+  }
 }

@@ -177,6 +177,8 @@ class Bautagesbericht(Base):
     bemerkungen = Column(Text)
     # Ort & Arbeitszeit (v0.8 — Feld-Formular)
     ort = Column(String(200))
+    # Mehrtägige Einsätze: Berichte mit gleichem Montage-Namen gehören zusammen
+    montage = Column(String(200))
     arbeitszeit_von = Column(String(10))
     arbeitszeit_bis = Column(String(10))
     pause_minuten = Column(Integer)

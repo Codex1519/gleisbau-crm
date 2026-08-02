@@ -14,7 +14,13 @@ import { api } from '../api'
 const SearchDataContext = createContext(null)
 
 const REFRESH_MS = 5 * 60 * 1000
-const LEER = { kunden: [], personal: [], projekte: [], maschinen: [] }
+const LEER = {
+  kunden: [],
+  personal: [],
+  projekte: [],
+  maschinen: [],
+  bautagesberichte: [],
+}
 
 export function SearchProvider({ children }) {
   const [daten, setDaten] = useState(LEER)
@@ -24,13 +30,15 @@ export function SearchProvider({ children }) {
   const ladeDaten = useCallback(async (initial) => {
     if (initial) setLade(true)
     try {
-      const [kunden, personal, projekte, maschinen] = await Promise.all([
-        api.list('kunden'),
-        api.list('personal'),
-        api.list('projekte'),
-        api.list('maschinen'),
-      ])
-      setDaten({ kunden, personal, projekte, maschinen })
+      const [kunden, personal, projekte, maschinen, bautagesberichte] =
+        await Promise.all([
+          api.list('kunden'),
+          api.list('personal'),
+          api.list('projekte'),
+          api.list('maschinen'),
+          api.list('bautagesberichte'),
+        ])
+      setDaten({ kunden, personal, projekte, maschinen, bautagesberichte })
       setFehler(null)
     } catch (e) {
       setFehler(e.message)

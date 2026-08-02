@@ -59,6 +59,8 @@ def fuehre_migrationen_aus() -> None:
         "unterschrift_auftragnehmer": "TEXT",
         "unterschrift_auftraggeber": "TEXT",
         "unterschrift_datum": "DATE",
+        # v0.9: Montage-Gruppierung
+        "montage": "VARCHAR(200)",
     }
 
     with engine.begin() as conn:
