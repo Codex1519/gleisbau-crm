@@ -8,6 +8,13 @@ import { IconSearch, IconX } from './Icons'
 const MIN_ZEICHEN = 2
 const MAX_PRO_KATEGORIE = 5
 
+// Plattformabhängiges Kürzel-Label: ⌘K auf Apple-Geräten, sonst Strg+K.
+// (Der Handler akzeptiert ohnehin beide Tasten — nur die Anzeige variiert.)
+const IST_APPLE = /Mac|iPhone|iPad|iPod/.test(
+  navigator.userAgentData?.platform ?? navigator.platform ?? ''
+)
+const KUERZEL_LABEL = IST_APPLE ? '⌘K' : 'Strg+K'
+
 // Hebt das erste Vorkommen von `query` in `text` fett hervor.
 function Highlight({ text, query }) {
   const t = String(text ?? '')
@@ -202,7 +209,7 @@ export function GlobalSearch() {
           aria-controls="gs-dropdown"
         />
         <kbd className="gs-kbd" aria-hidden="true">
-          ⌘K
+          {KUERZEL_LABEL}
         </kbd>
         {(query || mobilOffen) && (
           <button

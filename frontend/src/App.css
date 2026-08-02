@@ -56,12 +56,44 @@
   /* Radien */
   --r-sm: 4px;
   --r-md: 6px;
-  --r-lg: 8px;
+  --r-lg: 10px;
   --r-xl: 12px;
   --r-full: 9999px;
 
   /* Gemeinsame Kopfzeilen-Höhe: Sidebar-Brand und Topbar fluchten */
   --kopf-h: 64px;
+
+  /* Marken-Verlauf (Logo, Primär-Buttons, Login) */
+  --brand-gradient: linear-gradient(135deg, var(--accent), #4f46e5);
+  --brand-gradient-hover: linear-gradient(135deg, var(--accent-hover), #4338ca);
+}
+
+/* Dezente, schmale Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--slate-300) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--slate-300);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
 }
 
 /* ============================================
@@ -77,7 +109,8 @@ main.main {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--bg-page);
+  /* Sanfter Verlauf oben gibt der Fläche Tiefe, läuft in bg-page aus */
+  background: linear-gradient(180deg, #f2f6fc 0%, var(--bg-page) 280px);
 }
 
 .content {
@@ -401,6 +434,7 @@ main.main {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  background: linear-gradient(180deg, #fbfcfe, var(--bg-surface));
 }
 
 .card-header h2,
@@ -461,13 +495,15 @@ main.main {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--brand-gradient);
   color: #fff;
-  border-color: var(--accent);
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.3);
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--brand-gradient-hover);
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
 }
 
 .btn-secondary {
@@ -1604,33 +1640,58 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg, #f4f5f7);
+  /* Marken-Verlauf als weiche Lichtflecken auf hellem Grund */
+  background:
+    radial-gradient(1100px 560px at 15% -10%, rgba(37, 99, 235, 0.14), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, rgba(79, 70, 229, 0.12), transparent 55%),
+    var(--slate-50);
   padding: 24px;
 }
 
 .login-karte {
   width: 100%;
-  max-width: 380px;
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border, #e2e4e9);
-  border-radius: 12px;
-  padding: 28px;
+  max-width: 400px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 32px 32px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 20px 50px rgba(15, 23, 42, 0.1),
+    0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 .login-kopf {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+}
+.login-kopf .brand-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  font-size: 20px;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+.login-kopf .brand-name {
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+.login-kopf .brand-sub {
+  font-size: 12.5px;
+  margin-top: 1px;
 }
 
 .login-btn {
   justify-content: center;
-  margin-top: 4px;
+  margin-top: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
 }
 
 /* Benutzer-Info + Abmelden in der Sidebar */
