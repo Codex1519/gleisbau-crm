@@ -88,6 +88,17 @@ export function BautagesberichtFormFelder({
               onChange={(e) => set('ort', e.target.value)}
             />
           </label>
+
+          <label className="feld">
+            <span className="feld-label">Montage (optional)</span>
+            <input
+              type="text"
+              placeholder="z. B. Weiche W23 — gleicher Name = gleiche Gruppe"
+              value={form.montage}
+              disabled={speichere}
+              onChange={(e) => set('montage', e.target.value)}
+            />
+          </label>
         </div>
       </Sektion>
 
@@ -279,6 +290,7 @@ export function bautagesberichtPayload(form) {
     'ort',
     'arbeitszeit_von',
     'arbeitszeit_bis',
+    'montage',
   ]
   for (const f of textFelder) {
     payload[f] = form[f] && form[f].trim() ? form[f] : null
@@ -316,5 +328,6 @@ export function berichtZuForm(bericht) {
     arbeitszeit_von: s(bericht.arbeitszeit_von),
     arbeitszeit_bis: s(bericht.arbeitszeit_bis),
     pause_minuten: s(bericht.pause_minuten),
+    montage: s(bericht.montage),
   }
 }
