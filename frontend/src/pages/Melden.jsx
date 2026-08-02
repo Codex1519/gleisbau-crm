@@ -10,6 +10,12 @@ import { WETTER_OPTIONEN } from '../lib/bautagesbericht'
 import { formatStunden, heuteISO } from '../lib/zeiterfassung'
 import { Spinner } from '../components/Spinner'
 import {
+  pushQueue,
+  flushQueue,
+  queueLaenge,
+  istNetzfehler,
+} from '../lib/feldQueue'
+import {
   WetterSymbol,
   IconSchloss,
   IconOffline,
@@ -82,7 +88,9 @@ export function Melden() {
   const [schritt, setSchritt] = useState(0)
   const [sende, setSende] = useState(false)
   const [sendeFehler, setSendeFehler] = useState(null)
-  const [fertig, setFertig] = useState(false)
+  const [fertig, setFertig] = useState(false) // false | 'gesendet' | 'gepuffert'
+  const [queueAnzahl, setQueueAnzahl] = useState(queueLaenge())
+  const [flushInfo, setFlushInfo] = useState(null)
   const [a, setA] = useState(LEERES_FORMULAR)
 
   // Login-Screen
@@ -108,9 +116,26 @@ export function Melden() {
     feldFetch('/feld/stammdaten')
       .then(async (r) => {
         if (!r.ok) throw new Error('server')
-        setStammdaten(await r.json())
+        const daten = await r.json()
+        setStammdaten(daten)
+        // Für Offline-Starts auf der Baustelle merken
+        localStorage.setItem('gleisbau_feld_stammdaten', JSON.stringify(daten))
       })
-      .catch(() => setLadeFehler('server'))
+      .catch(() => {
+        // Offline? Mit zuletzt bekannten Stammdaten weiterarbeiten.
+        try {
+          const cached = JSON.parse(
+            localStorage.getItem('gleisbau_feld_stammdaten')
+          )
+          if (cached) {
+            setStammdaten(cached)
+            return
+          }
+        } catch {
+          /* kein Cache */
+        }
+        setLadeFehler('server')
+      })
   }, [benutzer])
 
   // Eingefrorene Tabs: Formular zurücksetzen bei Restore oder nach
@@ -143,6 +168,37 @@ export function Melden() {
       document.removeEventListener('visibilitychange', beiSichtbarkeit)
     }
   }, [])
+
+  // Wartende Berichte automatisch nachsenden (App-Start + Netz zurück)
+  useEffect(() => {
+    let aktivFlag = true
+    async function flush() {
+      if (!benutzer || queueLaenge() === 0) return
+      const res = await flushQueue((payload) =>
+        feldFetch('/feld/bautagesberichte', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      )
+      if (!aktivFlag) return
+      setQueueAnzahl(res.verbleibend)
+      if (res.gesendet > 0) {
+        setFlushInfo(
+          res.gesendet === 1
+            ? 'Wartender Bericht wurde gesendet ✓'
+            : `${res.gesendet} wartende Berichte wurden gesendet ✓`
+        )
+        setTimeout(() => aktivFlag && setFlushInfo(null), 6000)
+      }
+    }
+    flush()
+    window.addEventListener('online', flush)
+    return () => {
+      aktivFlag = false
+      window.removeEventListener('online', flush)
+    }
+  }, [benutzer])
 
   async function einloggen(e) {
     e.preventDefault()
@@ -287,32 +343,32 @@ export function Melden() {
   async function absenden() {
     setSende(true)
     setSendeFehler(null)
-    try {
-      const payload = {
-        projekt_id: a.projekt_id,
-        datum: a.datum,
-        ort: a.ort.trim(),
-        arbeitszeit_von: a.von,
-        arbeitszeit_bis: a.bis,
-        pause_minuten: Number(a.pause) || 0,
-        arbeiten_durchgefuehrt: a.arbeiten.trim(),
-        personal_anwesend: serializePersonalAnwesend(a.counts, a.extra),
-        maschinen_eingesetzt: a.maschinen.trim(),
-        materiallieferungen: a.material.trim(),
-        baufortschritt: Number(a.fortschritt) || 0,
-        unterschrift_auftragnehmer: a.sigAuftragnehmer,
-        unterschrift_datum: a.sigDatum,
-      }
-      if (a.wetter) payload.wetter = a.wetter
-      if (a.temperatur !== '') payload.temperatur = Number(a.temperatur)
-      if (a.sigAuftraggeber)
-        payload.unterschrift_auftraggeber = a.sigAuftraggeber
-      if (a.problemeJa && a.behinderungen.trim())
-        payload.behinderungen = a.behinderungen.trim()
-      if (a.problemeJa && a.vorkommnisse.trim())
-        payload.besondere_vorkommnisse = a.vorkommnisse.trim()
-      if (a.bemerkungen.trim()) payload.bemerkungen = a.bemerkungen.trim()
+    const payload = {
+      projekt_id: a.projekt_id,
+      datum: a.datum,
+      ort: a.ort.trim(),
+      arbeitszeit_von: a.von,
+      arbeitszeit_bis: a.bis,
+      pause_minuten: Number(a.pause) || 0,
+      arbeiten_durchgefuehrt: a.arbeiten.trim(),
+      personal_anwesend: serializePersonalAnwesend(a.counts, a.extra),
+      maschinen_eingesetzt: a.maschinen.trim(),
+      materiallieferungen: a.material.trim(),
+      baufortschritt: Number(a.fortschritt) || 0,
+      unterschrift_auftragnehmer: a.sigAuftragnehmer,
+      unterschrift_datum: a.sigDatum,
+    }
+    if (a.wetter) payload.wetter = a.wetter
+    if (a.temperatur !== '') payload.temperatur = Number(a.temperatur)
+    if (a.sigAuftraggeber)
+      payload.unterschrift_auftraggeber = a.sigAuftraggeber
+    if (a.problemeJa && a.behinderungen.trim())
+      payload.behinderungen = a.behinderungen.trim()
+    if (a.problemeJa && a.vorkommnisse.trim())
+      payload.besondere_vorkommnisse = a.vorkommnisse.trim()
+    if (a.bemerkungen.trim()) payload.bemerkungen = a.bemerkungen.trim()
 
+    try {
       const r = await feldFetch('/feld/bautagesberichte', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -322,13 +378,15 @@ export function Melden() {
         const body = await r.json().catch(() => ({}))
         throw new Error(body.detail || `Senden fehlgeschlagen (${r.status})`)
       }
-      setFertig(true)
+      setFertig('gesendet')
     } catch (e) {
-      setSendeFehler(
-        e.message.includes('Failed to fetch')
-          ? 'Keine Verbindung — bitte später erneut versuchen.'
-          : e.message
-      )
+      if (istNetzfehler(e)) {
+        // Kein Netz: Bericht sicher puffern, später automatisch senden
+        setQueueAnzahl(pushQueue(payload))
+        setFertig('gepuffert')
+      } else {
+        setSendeFehler(e.message)
+      }
     } finally {
       setSende(false)
     }
@@ -458,12 +516,23 @@ export function Melden() {
   }
 
   if (fertig) {
+    const gepuffert = fertig === 'gepuffert'
     return (
       <MeldenRahmen>
         <div className="melden-zentriert">
-          <div className="melden-emoji melden-emoji-ok"><IconCheckKreis /></div>
-          <h1>Bericht gesendet!</h1>
-          <p>Dein Bautagesbericht ist im Büro angekommen. Danke!</p>
+          <div
+            className={`melden-emoji ${
+              gepuffert ? 'melden-emoji-warte' : 'melden-emoji-ok'
+            }`}
+          >
+            {gepuffert ? <IconOffline /> : <IconCheckKreis />}
+          </div>
+          <h1>{gepuffert ? 'Bericht gespeichert' : 'Bericht gesendet!'}</h1>
+          <p>
+            {gepuffert
+              ? 'Gerade kein Netz — dein Bericht ist sicher auf dem Handy gespeichert und wird automatisch gesendet, sobald du wieder Empfang hast. Du musst nichts weiter tun.'
+              : 'Dein Bautagesbericht ist im Büro angekommen. Danke!'}
+          </p>
           <button
             className="btn btn-primary melden-weiter"
             onClick={neuerBericht}
@@ -1020,7 +1089,15 @@ export function Melden() {
 
       <div className="melden-benutzer">
         <span>
-          <IconHelm className="icon helm-klein" /> Angemeldet:{' '}<strong>{ichName}</strong>
+          <IconHelm className="icon helm-klein" /> Angemeldet:{' '}
+          <strong>{ichName}</strong>
+          {queueAnzahl > 0 && (
+            <span className="queue-hinweis">
+              {' '}· {queueAnzahl} Bericht{queueAnzahl > 1 ? 'e' : ''} wartet
+              auf Netz
+            </span>
+          )}
+          {flushInfo && <span className="queue-ok"> · {flushInfo}</span>}
         </span>
         <button type="button" onClick={abmelden}>
           Abmelden

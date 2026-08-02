@@ -2697,3 +2697,16 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   vertical-align: -3px;
   margin-right: 4px;
 }
+
+/* ---------- Offline-Warteschlange ---------- */
+.melden-emoji.melden-emoji-warte svg {
+  color: #ca8a04;
+}
+.melden-benutzer .queue-hinweis {
+  color: #ca8a04;
+  font-weight: 600;
+}
+.melden-benutzer .queue-ok {
+  color: var(--success);
+  font-weight: 600;
+}
