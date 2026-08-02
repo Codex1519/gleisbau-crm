@@ -2710,3 +2710,23 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
   color: var(--success);
   font-weight: 600;
 }
+
+/* ---------- Baustellen-Login auf der Personalakte ---------- */
+.bl-vorhanden {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.bl-vorhanden a {
+  color: var(--accent);
+}
+.bl-vorhanden a:hover {
+  text-decoration: underline;
+}
+.bl-aktiv { color: var(--success); font-weight: 600; }
+.bl-inaktiv { color: var(--danger); font-weight: 600; }
+.bl-hilfe {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

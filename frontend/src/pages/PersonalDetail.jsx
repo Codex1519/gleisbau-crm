@@ -12,6 +12,7 @@ import { EntityFelder } from '../components/EntityFelder'
 import { RelatedList } from '../components/RelatedList'
 import { Stundenzettel } from '../components/Stundenzettel'
 import { ZeiterfassungEditModal } from '../components/ZeiterfassungEditModal'
+import { BaustellenLogin } from '../components/BaustellenLogin'
 import {
   bereiteFormDatenAuf,
   entityZuForm,
@@ -272,6 +273,8 @@ export function PersonalDetail() {
 
           {!editMode && (
             <>
+              <BaustellenLogin person={person} />
+
               <Sektion
                 titel="Qualifikationen"
                 count={qualifikationen.length}
