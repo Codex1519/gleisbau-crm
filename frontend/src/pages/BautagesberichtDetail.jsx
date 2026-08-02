@@ -161,11 +161,16 @@ export function BautagesberichtDetail() {
     const [vh, vm] = String(bericht.arbeitszeit_von).split(':').map(Number)
     const [bh, bm] = String(bericht.arbeitszeit_bis).split(':').map(Number)
     const pause = Number(bericht.pause_minuten) || 0
-    const netto = bh * 60 + bm - (vh * 60 + vm) - pause
+    const vonMin = vh * 60 + vm
+    let bisMin = bh * 60 + bm
+    // Nachtschicht: Ende liegt am Folgetag
+    const uebernacht = bisMin < vonMin
+    if (uebernacht) bisMin += 24 * 60
+    const netto = bisMin - vonMin - pause
     const stunden = netto > 0 ? (netto / 60).toFixed(2) : null
-    return `${bericht.arbeitszeit_von}–${bericht.arbeitszeit_bis} · ${pause} Min. Pause${
-      stunden ? ` = ${stunden} h` : ''
-    }`
+    return `${bericht.arbeitszeit_von}–${bericht.arbeitszeit_bis}${
+      uebernacht ? ' (Folgetag)' : ''
+    } · ${pause} Min. Pause${stunden ? ` = ${stunden} h` : ''}`
   })()
   const projektName = projekt
     ? projekteModul.displayName(projekt)

@@ -236,11 +236,19 @@ export function Melden() {
       0
     )
 
-  const nettoMinuten = useMemo(() => {
+  // Arbeitszeit inkl. Nachtschichten: liegt "Bis" vor "Von", endet die
+  // Schicht am Folgetag (+24 h) — im Gleisbau ist Nachtarbeit Standard.
+  const { nettoMinuten, uebernacht } = useMemo(() => {
     const von = zeitZuMinuten(a.von)
-    const bis = zeitZuMinuten(a.bis)
-    if (von == null || bis == null) return null
-    return bis - von - (Number(a.pause) || 0)
+    let bis = zeitZuMinuten(a.bis)
+    if (von == null || bis == null)
+      return { nettoMinuten: null, uebernacht: false }
+    const istNacht = bis < von
+    if (istNacht) bis += 24 * 60
+    return {
+      nettoMinuten: bis - von - (Number(a.pause) || 0),
+      uebernacht: istNacht,
+    }
   }, [a.von, a.bis, a.pause])
 
   // ---------- Schritte (Ersteller kommt aus dem Login) ----------
@@ -263,6 +271,7 @@ export function Melden() {
     {
       id: 'datum',
       frage: 'Für welchen Tag ist der Bericht?',
+      hinweis: 'Bei Nachtschichten: der Tag, an dem die Schicht begonnen hat.',
       valid: () => !!a.datum,
     },
     {
@@ -280,7 +289,8 @@ export function Melden() {
     {
       id: 'zeit',
       frage: 'Wie lange wurde gearbeitet?',
-      hinweis: 'Von, Bis und Pause — die Stunden rechnen wir aus.',
+      hinweis:
+        'Von, Bis und Pause — die Stunden rechnen wir aus. Nachtschicht? Einfach die Ende-Uhrzeit vom Folgetag eintragen.',
       valid: () => nettoMinuten != null && nettoMinuten > 0,
     },
     {
@@ -790,8 +800,10 @@ export function Melden() {
               {nettoMinuten == null
                 ? 'Von und Bis eintragen'
                 : nettoMinuten <= 0
-                ? 'Ende muss nach dem Anfang liegen'
-                : `= ${formatStunden(nettoMinuten)} Stunden`}
+                ? 'Prüfe Von, Bis und Pause — es ergibt sich keine Arbeitszeit'
+                : `= ${formatStunden(nettoMinuten)} Stunden${
+                    uebernacht ? ' · Nachtschicht (Ende am Folgetag)' : ''
+                  }`}
             </div>
           </div>
         )
@@ -1108,8 +1120,9 @@ export function Melden() {
               <div>
                 <dt>Arbeitszeit</dt>
                 <dd>
-                  {a.von}–{a.bis} · {Number(a.pause) || 0} Min. Pause ={' '}
-                  {formatStunden(nettoMinuten)} h
+                  {a.von}–{a.bis}
+                  {uebernacht && ' (Folgetag)'} · {Number(a.pause) || 0} Min.
+                  Pause = {formatStunden(nettoMinuten)} h
                 </dd>
               </div>
               {a.wetter && (
