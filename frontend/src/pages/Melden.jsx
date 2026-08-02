@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { API_BASE } from '../api'
 import {
@@ -83,7 +83,11 @@ export function Melden() {
     sigDatum: heuteISO(),
   }))
 
+  // Merkt sich die letzte Interaktion — Basis für den Auto-Reset unten.
+  const letzteAktivitaet = useRef(Date.now())
+
   function set(feld, wert) {
+    letzteAktivitaet.current = Date.now()
     setA((alt) => ({ ...alt, [feld]: wert }))
   }
 
@@ -102,6 +106,68 @@ export function Melden() {
         setLadeFehler(e.message === 'key' ? 'kein-key' : 'server')
       )
   }, [key])
+
+  // Handys frieren Browser-Tabs ein: Wer den Link "neu öffnet", bekommt
+  // oft den alten Tab von gestern zurück — samt alter Auswahl. Darum:
+  // Formular zurücksetzen, wenn die Seite aus dem Cache zurückkommt oder
+  // nach längerer Pause (>30 Min.) wieder sichtbar wird. Kurzes
+  // App-Wechseln (Nachricht checken) zerstört den Bericht dagegen nicht.
+  useEffect(() => {
+    const PAUSE_RESET_MS = 30 * 60 * 1000
+
+    function aufAnfang() {
+      letzteAktivitaet.current = Date.now()
+      setFertig(false)
+      setSchritt(0)
+      setSendeFehler(null)
+      setA((alt) => ({
+        ...alt,
+        ersteller_id: null,
+        projekt_id: null,
+        datum: heuteISO(),
+        ort: '',
+        wetter: '',
+        temperatur: '',
+        von: '',
+        bis: '',
+        pause: '30',
+        arbeiten: '',
+        counts: Object.fromEntries(STANDARD_ROLLEN.map((r) => [r, 0])),
+        extra: [],
+        maschinen: '',
+        material: '',
+        problemeJa: null,
+        behinderungen: '',
+        vorkommnisse: '',
+        fortschritt: 0,
+        bemerkungen: '',
+        sigAuftragnehmer: '',
+        sigAuftraggeber: '',
+        agNichtVorOrt: false,
+        sigDatum: heuteISO(),
+      }))
+    }
+
+    function beiPageshow(e) {
+      // persisted = aus dem Back-Forward-Cache wiederhergestellt
+      if (e.persisted) aufAnfang()
+    }
+    function beiSichtbarkeit() {
+      if (
+        document.visibilityState === 'visible' &&
+        Date.now() - letzteAktivitaet.current > PAUSE_RESET_MS
+      ) {
+        aufAnfang()
+      }
+    }
+
+    window.addEventListener('pageshow', beiPageshow)
+    document.addEventListener('visibilitychange', beiSichtbarkeit)
+    return () => {
+      window.removeEventListener('pageshow', beiPageshow)
+      document.removeEventListener('visibilitychange', beiSichtbarkeit)
+    }
+  }, [])
 
   const personalGesamt =
     STANDARD_ROLLEN.reduce((s, r) => s + (Number(a.counts[r]) || 0), 0) +
@@ -213,10 +279,12 @@ export function Melden() {
 
   function weiter() {
     if (!aktuell.valid()) return
+    letzteAktivitaet.current = Date.now()
     if (istLetzter) absenden()
     else setSchritt((s) => s + 1)
   }
   function zurueck() {
+    letzteAktivitaet.current = Date.now()
     setSendeFehler(null)
     setSchritt((s) => Math.max(0, s - 1))
   }
