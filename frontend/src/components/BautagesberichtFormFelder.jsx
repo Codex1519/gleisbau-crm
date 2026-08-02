@@ -1,6 +1,7 @@
 import { Sektion } from './Sektion'
 import { findModul } from '../modules'
 import { WETTER_OPTIONEN, fortschrittFarbe } from '../lib/bautagesbericht'
+import { PersonalAnwesendFeld } from './PersonalAnwesendFeld'
 
 // Geteilte Formular-Sektionen für Bautagesberichte (Neu + Edit).
 // form: State-Objekt, set(feld, wert): Setter, personal/projekte: Optionslisten.
@@ -123,16 +124,15 @@ export function BautagesberichtFormFelder({
               onChange={(e) => set('arbeiten_durchgefuehrt', e.target.value)}
             />
           </label>
-          <label className="feld">
+          <div className="feld feld-wide">
             <span className="feld-label">Anwesendes Personal</span>
-            <textarea
-              placeholder="Welche Mitarbeiter waren vor Ort?"
-              value={form.personal_anwesend}
+            <PersonalAnwesendFeld
+              wert={form.personal_anwesend}
               disabled={speichere}
-              onChange={(e) => set('personal_anwesend', e.target.value)}
+              onChange={(v) => set('personal_anwesend', v)}
             />
-          </label>
-          <label className="feld">
+          </div>
+          <label className="feld feld-wide">
             <span className="feld-label">Eingesetzte Maschinen</span>
             <textarea
               placeholder="Welche Maschinen wurden genutzt?"

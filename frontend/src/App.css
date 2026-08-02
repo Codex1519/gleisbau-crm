@@ -1925,3 +1925,104 @@ table.stundenzettel tbody tr.ueberstunde:hover td {
 :root[data-theme='dunkel'] ::selection {
   background: rgba(59, 130, 246, 0.35);
 }
+
+/* ============================================
+   Anwesendes Personal (strukturierte Erfassung)
+   ============================================ */
+.pa-feld {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.pa-rollen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 14px;
+}
+
+.pa-rolle {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.pa-rolle-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.pa-rolle input,
+.pa-extra input {
+  padding: 7px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-surface);
+  width: 100%;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.pa-rolle input:focus,
+.pa-extra input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.pa-extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pa-extra input[type='text'] {
+  flex: 1;
+}
+.pa-extra input[type='number'] {
+  width: 76px;
+  flex-shrink: 0;
+}
+.pa-entfernen {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.pa-entfernen:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-soft-border);
+}
+.pa-entfernen svg {
+  width: 13px;
+  height: 13px;
+}
+
+.pa-add {
+  align-self: flex-start;
+  border: 1px dashed var(--border-strong);
+  font-size: 12.5px;
+}
+
+.pa-zusammenfassung {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.pa-zusammenfassung span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
