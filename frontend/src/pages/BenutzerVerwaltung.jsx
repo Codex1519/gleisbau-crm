@@ -14,7 +14,7 @@ const ROLLEN = [
   { value: 'admin', label: 'Admin' },
   { value: 'bauleiter', label: 'Bauleiter' },
   { value: 'sachbearbeiter', label: 'Sachbearbeiter' },
-  { value: 'feld', label: 'Feld (nur Bautagesberichte)' },
+  { value: 'feld', label: 'Baustelle (nur Bautagesberichte)' },
 ]
 
 const NEUER_BENUTZER = {
@@ -63,6 +63,17 @@ export function BenutzerVerwaltung() {
     if (!id) return '—'
     const p = personal.find((x) => x.id === id)
     return p ? `${p.vorname ?? ''} ${p.nachname ?? ''}`.trim() || `#${id}` : `#${id}`
+  }
+
+  // Name + Position aus den Stammdaten, z. B. "Salam Arsnukajev — Polier".
+  // Die Position ist die fachliche Rolle des Mitarbeiters; die Login-Rolle
+  // regelt nur die Zugriffsrechte.
+  function personalNameMitPosition(id) {
+    if (!id) return '—'
+    const p = personal.find((x) => x.id === id)
+    if (!p) return `#${id}`
+    const name = personalName(id)
+    return p.position ? `${name} — ${p.position}` : name
   }
 
   async function anlegen(e) {
@@ -195,7 +206,7 @@ export function BenutzerVerwaltung() {
                 <option value="">— keine Verknüpfung —</option>
                 {personal.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {personalName(p.id)}
+                    {personalNameMitPosition(p.id)}
                   </option>
                 ))}
               </select>
@@ -247,7 +258,7 @@ export function BenutzerVerwaltung() {
                       )}
                     </td>
                     <td>{ROLLEN.find((r) => r.value === b.rolle)?.label ?? b.rolle}</td>
-                    <td>{personalName(b.personal_id)}</td>
+                    <td>{personalNameMitPosition(b.personal_id)}</td>
                     <td>{b.aktiv ? 'aktiv' : 'deaktiviert'}</td>
                     <td>
                       <div className="aktionen" style={{ gap: 6 }}>
