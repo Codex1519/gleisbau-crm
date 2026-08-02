@@ -2,6 +2,8 @@
 //
 // felder[].type:  'text' | 'number' | 'date' | 'datetime-local' | 'textarea'
 //                 | 'fk' | 'enum'
+// felder[].nurBearbeiten: true → erscheint nicht im Anlege-Formular,
+//                 nur in Detail-Ansicht und Edit-Modus
 // felder[].fk:    { module: 'kunden', display: 'name' }  (nur bei type 'fk')
 // felder[].optionen: [{ value, label, farbe? }]          (nur bei type 'enum')
 //
@@ -96,8 +98,10 @@ export const MODULE = [
       { name: 'plz', label: 'PLZ', type: 'text' },
       { name: 'ort', label: 'Ort', type: 'text' },
       { name: 'telefon', label: 'Telefon', type: 'text' },
-      { name: 'kranktage', label: 'Kranktage', type: 'number' },
-      { name: 'urlaubstage', label: 'Urlaubstage', type: 'number' },
+      // Kranktage entstehen erst im Lauf der Zeit — beim Anlegen ausgeblendet,
+      // in der Personalakte (Bearbeiten) weiterhin pflegbar.
+      { name: 'kranktage', label: 'Kranktage', type: 'number', nurBearbeiten: true },
+      { name: 'urlaubstage', label: 'Urlaubstage (Jahresanspruch)', type: 'number' },
     ],
     listSpalten: ['nachname', 'vorname', 'position', 'telefon'],
     searchKeys: ['nachname', 'vorname', 'position', 'ort'],

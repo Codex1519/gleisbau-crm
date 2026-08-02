@@ -131,7 +131,8 @@ export function FormPage({ modulKey }) {
         ) : (
           <form onSubmit={absenden}>
             <div className="felder">
-              {modul.felder.map((f) => (
+              {/* nurBearbeiten-Felder (z. B. Kranktage) erst in der Akte pflegen */}
+              {modul.felder.filter((f) => !f.nurBearbeiten).map((f) => (
                 <FormField
                   key={f.name}
                   feld={f}
