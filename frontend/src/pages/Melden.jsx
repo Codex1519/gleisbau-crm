@@ -310,7 +310,11 @@ export function Melden() {
               </button>
             ))}
             {stammdaten.personal.length === 0 && (
-              <p className="melden-leer">Keine Mitarbeiter angelegt.</p>
+              <p className="melden-leer">
+                Keine Baustellen-Mitarbeiter gefunden. Es erscheinen nur
+                Personen, deren Position im CRM Polier, Vorarbeiter,
+                Facharbeiter oder Bauhelfer ist — bitte im Büro melden.
+              </p>
             )}
           </div>
         )
