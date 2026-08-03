@@ -1,9 +1,9 @@
 # Gleisbau-CRM
 
 > CRM / ERP-Prototyp für ein Gleisbau-Unternehmen — Kunden, Projekte, Personal,
-> Maschinen, Zeiterfassung und Dokumente in einer Anwendung.
+> Maschinen, Zeiterfassung, Bautagesberichte und Rechnungen in einer Anwendung.
 
-**Version:** v0.1 (Prototyp)
+**Version:** v1.0 (Prototyp)
 
 ---
 
@@ -13,17 +13,55 @@ Gleisbau-CRM bündelt den operativen Alltag eines mittelständischen
 Gleisbau-Betriebs in einer einzigen Web-Anwendung:
 
 - **Stammdaten** für Kunden, Ansprechpartner und Mitarbeiter
-- **Projektsteuerung** mit Auftragsdaten, Budget und Zeitraum
+- **Projektsteuerung** mit Auftragsdaten, Budget, Zeitraum, Kanban-Board
+  und Personal-/Maschinen-Zuordnung
 - **Ressourcenverwaltung** für Maschinen (Wartung, TÜV)
-- **Bautagesberichte** dokumentieren Einsätze pro Projekt
-- **Zeiterfassung** verbindet Mitarbeiter und Projekt, mit
-  automatischer Stundenberechnung und Stundenzettel-Ansicht
-- **Qualifikationen** und **Notfallkontakte** pro Mitarbeiter
-- **Dokumente** (Rechnungen, Verträge etc.) je Projekt
+- **Bautagesberichte** dokumentieren Einsätze pro Projekt — inklusive
+  mobilem Melde-Formular (`/melden`) für Feld-Mitarbeiter mit eigenem
+  Login, Touch-Unterschriften, Nachtschicht-Erfassung und Offline-Modus
+- **Montage-Serien**: mehrtägige Einsätze werden gruppiert, Folgeberichte
+  mit Vortageswerten vorbefüllt
+- **Zeiterfassung** mit Stundenzettel, Wochenansicht, CSV-Import/-Export
+- **Rechnungen mit E-Rechnungs-Unterstützung** (gesetzliche
+  E-Rechnungspflicht): lückenloser Nummernkreis, XRechnung-Export,
+  Empfang und Parsen eingehender E-Rechnungen — Details unten
+- **Login & Rollen** (admin, bauleiter, sachbearbeiter, feld) mit JWT,
+  Audit-Spalten (wer hat angelegt/geändert) und Benutzerverwaltung
+- **Dark Mode**, globale Suche (Cmd/Strg+K), Dashboard-KPIs
 
 Die Anwendung richtet sich an Bauleiter, Projektleiter und kaufmännische
 Sachbearbeiter im Gleisbau, denen heute Excel-Listen und Papierordner
 nicht mehr reichen.
+
+---
+
+## E-Rechnung (Rechnungsmodul)
+
+Hintergrund: In Deutschland müssen Unternehmen im B2B-Bereich seit
+**01.01.2025** E-Rechnungen (EN 16931) **empfangen** können; die Pflicht
+zur **Ausstellung** folgt ab 2027 (Umsatz > 800 T€) bzw. 2028 (alle).
+
+Das Modul unter **Finanzen → Rechnungen** deckt beides ab:
+
+- **Entwurf → Festschreiben**: Die Rechnungsnummer (`RE-JJJJ-NNNN`) wird
+  erst beim Festschreiben vergeben — lückenloser Nummernkreis pro Jahr.
+  Festgeschriebene Rechnungen sind unveränderbar und nicht löschbar,
+  nur stornierbar (GoBD-Prinzip).
+- **USt-Berechnung serverseitig** je Steuersatz (19/7/0 %), Fälligkeit
+  aus dem Zahlungsziel.
+- **XRechnung-Export**: `GET /rechnungen/{id}/xrechnung` liefert eine
+  XRechnung 3.0 (CII-Syntax, EN 16931) als XML — inkl. Verkäufer-Kontakt,
+  Zahlungsdaten (IBAN) und Einheiten-Codes nach UN/ECE Rec 20.
+- **Eingang**: XML-Upload empfangener E-Rechnungen (XRechnung/CII oder
+  UBL); Lieferant, Nummer, Datum und Betrag werden geparst, das
+  Original-XML wird gespeichert.
+- **Firmendaten** (Absender) pflegt der Admin unter Einstellungen —
+  ohne vollständige Firmendaten verweigert der XRechnung-Export.
+
+> Erzeugte XML-Dateien lassen sich mit dem
+> [KoSIT-Validator](https://erechnungsvalidator.service-bw.de/) gegen den
+> XRechnung-Standard prüfen. Keine Steuerberatung — die erste echte
+> Rechnung bitte fachlich prüfen lassen.
 
 ---
 
@@ -33,7 +71,8 @@ nicht mehr reichen.
 - **Python 3.13** mit **FastAPI 0.135**
 - **SQLAlchemy 2.0** als ORM
 - **Pydantic 2** für Schema-Validierung
-- **SQLite** als Datenbank (`gleisbau.db`)
+- **PyJWT** für Login-Tokens (Rollen: admin, bauleiter, sachbearbeiter, feld)
+- **SQLite** lokal (`gleisbau.db`) · **PostgreSQL 16** im Docker-Deployment
 - **Uvicorn** als ASGI-Server
 
 ### Frontend
@@ -107,9 +146,10 @@ Das Frontend ist unter **http://localhost:5173** erreichbar.
 ```
 gleisbau-crm/
 ├── backend/                     FastAPI + SQLAlchemy
-│   ├── main.py                  App-Entrypoint, CORS, Router-Registrierung
+│   ├── main.py                  App-Entrypoint, CORS, Migrationen, Router
 │   ├── database.py              Engine, Session, get_db-Dependency
-│   ├── models.py                SQLAlchemy-Modelle aller 12 Tabellen
+│   ├── auth.py                  JWT, Passwort-Hashing, Rollen-Guards
+│   ├── models.py                SQLAlchemy-Modelle aller Tabellen
 │   ├── schemas.py               Pydantic Create/Update-Schemas
 │   ├── routers/                 Ein Router je Modul (CRUD-Endpunkte)
 │   ├── requirements.txt
@@ -129,6 +169,9 @@ gleisbau-crm/
 │   ├── package.json
 │   └── vite.config.js
 │
+├── deploy/                      nginx-Konfiguration, Backup-Skript
+├── docker-compose.yml           Produktions-Setup (Postgres + Backend + nginx)
+├── DEPLOY.md                    Deployment-Anleitung (Hetzner)
 ├── README.md                    diese Datei
 └── Datenbankschema.png          ER-Diagramm
 ```
@@ -148,7 +191,9 @@ gleisbau-crm/
 | **Bautagesberichte** | `/bautagesberichte` | Tageseinsatz je Projekt |
 | **Qualifikationen** | `/qualifikationen` | Zertifikate je Mitarbeiter |
 | **Notfallkontakte** | `/notfallkontakte` | Notfallnummern je Mitarbeiter |
-| **Dokumente** | `/dokumente` | Rechnungen, Verträge je Projekt |
+| **Dokumente** | `/dokumente` | Verträge & Unterlagen je Projekt |
+| **Rechnungen** | `/rechnungen` | Ausgang mit XRechnung-Export, Eingang per XML-Upload |
+| **Melden** | `/melden` | Mobiles Bautagesbericht-Formular für Feld-Konten |
 
 Jedes Modul hat zwei Ebenen:
 
@@ -194,20 +239,18 @@ Beispiel: `GET http://localhost:8000/kunden`
 Dieser Prototyp dient zum Validieren der UX-Konzepte und der
 Datenarchitektur. Für den produktiven Einsatz fehlen bewusst:
 
-- **Keine Authentifizierung / kein Login** — jeder mit Netzwerk-Zugriff
-  hat volle Schreibrechte. Vor Produktiv-Einsatz dringend ergänzen.
-- **SQLite** statt PostgreSQL — gut für lokale Entwicklung, aber kein
-  Concurrency-Konzept für mehrere Schreib-Clients.
-- **Keine Datei-Uploads** für Dokumente — momentan nur Metadaten (Typ,
-  Betrag, Status). Tatsächliche PDFs müssen anderswo abgelegt werden.
-- **Keine Audit-Trail / kein Soft-Delete** — Löschen ist endgültig.
-- **Keine Berechtigungen** pro Rolle.
+- **Kein Datei-Upload** für Dokumente — momentan nur Metadaten (Typ,
+  Betrag, Status). PDFs müssen anderswo abgelegt werden; bei
+  Eingangsrechnungen wird immerhin das Original-XML gespeichert.
+- **Kein Soft-Delete** — Löschen ist endgültig (Ausnahme:
+  festgeschriebene Rechnungen sind gegen Löschen gesperrt).
 - **Keine Mehrsprachigkeit** — Oberfläche ist Deutsch.
-- **Tests** sind nicht enthalten.
-- **Join-Tabellen** `projekt_personal` und `projekt_maschinen` existieren
-  in der DB, sind aber noch nicht über die API ansprechbar.
-  Personal-Zuordnung erfolgt momentan nur indirekt über
-  Bautagesberichte und Zeiterfassungen.
+- **Keine automatisierte Testsuite** — getestet wird manuell und per
+  TestClient-Skripten.
+- **XRechnung ohne eingebettete Validierung** — erzeugte XMLs sollten
+  vor dem Erstversand einmal durch den KoSIT-Validator laufen.
+- Das beim ersten Start angelegte **Admin-Konto** (`admin`) hat ein
+  bekanntes Standard-Passwort — nach der Installation sofort ändern.
 
 ---
 

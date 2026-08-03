@@ -174,7 +174,7 @@ export function Layout() {
               Passwort ändern
             </NavLink>
           </div>
-          <div>v0.7 · Gleisbau-CRM</div>
+          <div>v1.0 · Gleisbau-CRM</div>
         </div>
       </aside>
 

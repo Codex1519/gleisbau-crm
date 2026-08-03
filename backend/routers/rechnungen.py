@@ -365,7 +365,8 @@ async def xrechnung_export(id: int, db=Depends(get_db)):
             status_code=422, detail="Nur festgeschriebene Ausgangsrechnungen exportierbar"
         )
     fd = _firmendaten(db)
-    fehlend = [f for f in ("name", "strasse", "plz", "ort", "ust_id", "iban", "email") if not getattr(fd, f)]
+    # telefon: XRechnung verlangt einen Verkäufer-Kontakt mit Telefon (BR-DE-6)
+    fehlend = [f for f in ("name", "strasse", "plz", "ort", "ust_id", "iban", "email", "telefon") if not getattr(fd, f)]
     if fehlend:
         raise HTTPException(
             status_code=422,
@@ -438,6 +439,9 @@ def _baue_xrechnung(r: Rechnung, positionen, fd: Firmendaten, kunde: Kunde) -> s
   xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
   xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
   <rsm:ExchangedDocumentContext>
+    <ram:BusinessProcessSpecifiedDocumentContextParameter>
+      <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
+    </ram:BusinessProcessSpecifiedDocumentContextParameter>
     <ram:GuidelineSpecifiedDocumentContextParameter>
       <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</ram:ID>
     </ram:GuidelineSpecifiedDocumentContextParameter>
@@ -452,6 +456,11 @@ def _baue_xrechnung(r: Rechnung, positionen, fd: Firmendaten, kunde: Kunde) -> s
       <ram:BuyerReference>{e(kunde.name or "")}</ram:BuyerReference>
       <ram:SellerTradeParty>
         <ram:Name>{e(fd.name)}</ram:Name>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>{e(fd.name)}</ram:PersonName>
+          <ram:TelephoneUniversalCommunication><ram:CompleteNumber>{e(fd.telefon or "")}</ram:CompleteNumber></ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication><ram:URIID>{e(fd.email)}</ram:URIID></ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
         <ram:PostalTradeAddress>
           <ram:PostcodeCode>{e(fd.plz)}</ram:PostcodeCode>
           <ram:LineOne>{e((fd.strasse or "") + " " + (fd.hausnummer or ""))}</ram:LineOne>

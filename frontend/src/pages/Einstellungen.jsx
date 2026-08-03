@@ -22,7 +22,7 @@ const FIRMEN_FELDER = [
   { name: 'bic', label: 'BIC' },
   { name: 'bank', label: 'Bank' },
   { name: 'email', label: 'E-Mail (Rechnungen)', pflichtXml: true },
-  { name: 'telefon', label: 'Telefon' },
+  { name: 'telefon', label: 'Telefon', pflichtXml: true },
 ]
 
 function FirmendatenSektion() {
@@ -187,7 +187,7 @@ export function Einstellungen() {
           </div>
           <div className="value-item">
             <div className="value-label">Version</div>
-            <div className="value">v0.7</div>
+            <div className="value">v1.0</div>
           </div>
         </div>
       </Sektion>
