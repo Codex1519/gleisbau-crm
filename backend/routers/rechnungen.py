@@ -23,7 +23,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from auth import require_loeschen
+from auth import require_admin, require_loeschen
 from database import get_db
 from models import Firmendaten, Kunde, Rechnung, Rechnungsposition
 
@@ -199,8 +199,10 @@ async def read_firmendaten(db=Depends(get_db)):
     }
 
 
-@router.put("/firmendaten")
+@router.put("/firmendaten", dependencies=[Depends(require_admin)])
 async def update_firmendaten(daten: FirmendatenDaten, db=Depends(get_db)):
+    # Nur Admin: hier stehen USt-IdNr. und die IBAN, auf die Kunden zahlen —
+    # eine manipulierte Bankverbindung wäre klassischer Rechnungsbetrug.
     fd = _firmendaten(db)
     for feld, wert in daten.model_dump(exclude_unset=True).items():
         setattr(fd, feld, wert)
