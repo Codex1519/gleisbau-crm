@@ -2839,3 +2839,64 @@ tr.montage-zeile td:first-child {
   color: var(--text);
   background: var(--bg-surface);
 }
+
+/* ============================================
+   Rechnungen (v1.0 — E-Rechnung)
+   ============================================ */
+
+/* Positions-Editor: kompakte Eingaben direkt in der Tabelle */
+.positionen-tabelle input,
+.positionen-tabelle select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 0.88rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text);
+}
+.positionen-tabelle input:focus,
+.positionen-tabelle select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.positionen-tabelle td {
+  vertical-align: middle;
+}
+
+/* Summenblock unter den Positionen (rechtsbündig wie auf der Rechnung) */
+.rechnung-summen {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+}
+.rechnung-summen > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 240px;
+  font-size: 0.92rem;
+}
+.rechnung-summen span {
+  color: var(--text-muted);
+}
+.rechnung-summen .summe-brutto {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 2px solid var(--text);
+  font-size: 1.02rem;
+}
+.rechnung-summen .summe-brutto span {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Nebenzeile unter einem Wert (z. B. Adresse unterm Kundennamen) */
+.value-neben {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}

@@ -4,6 +4,7 @@ import { MODULE } from '../modules'
 import {
   ModulIcon,
   IconHome,
+  IconEuro,
   IconSonne,
   IconMond,
   IconZahnrad,
@@ -104,6 +105,21 @@ export function Layout() {
               </li>
             ))}
           </ul>
+          <div className="nav-caption">Finanzen</div>
+          <ul>
+            <li>
+              <NavLink
+                to="/rechnungen"
+                className={({ isActive }) =>
+                  `nav-link${isActive ? ' aktiv' : ''}`
+                }
+              >
+                <IconEuro className="icon nav-icon" />
+                <span>Rechnungen</span>
+              </NavLink>
+            </li>
+          </ul>
+
           {istAdmin && (
             <>
               <div className="nav-caption">Verwaltung</div>

@@ -19,6 +19,7 @@ from routers import (
     bautagesberichte,
     benutzer as benutzer_router,
     feld,
+    rechnungen,
 )
 
 # Alle Tabellen in einer Datenbank erstellen
@@ -146,6 +147,7 @@ app.include_router(qualifikationen.router, dependencies=geschuetzt)
 app.include_router(zeiterfassungen.router, dependencies=geschuetzt)
 app.include_router(dokumente.router, dependencies=geschuetzt)
 app.include_router(bautagesberichte.router, dependencies=geschuetzt)
+app.include_router(rechnungen.router, dependencies=geschuetzt)
 
 
 def erstelle_admin_falls_leer() -> None:

@@ -188,6 +188,11 @@ export const IconInfo = (p) => (
     <path {...stroke} d="M10 9v5M10 6.5v.5" strokeWidth="1.8" />
   </Svg>
 )
+export const IconEuro = (p) => (
+  <Svg {...p}>
+    <path {...stroke} d="M14.5 5.5A5.5 5.5 0 0 0 6 10a5.5 5.5 0 0 0 8.5 4.5M4 8.5h7M4 11.5h7" />
+  </Svg>
+)
 export const IconInbox = (p) => (
   <Svg {...p} viewBox="0 0 24 24" className="empty-state-icon">
     <path {...stroke} strokeWidth="1.5" d="M3 13h4l2 3h6l2-3h4M5 13l2-7h10l2 7v6H5v-6Z" />

@@ -210,3 +210,71 @@ class Benutzer(Base):
     geaendert_von = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+# ---------- Rechnungen (v1.0 — E-Rechnungspflicht) ----------
+
+class Firmendaten(Base):
+    """Eigene Firmendaten — Absender aller Ausgangsrechnungen (eine Zeile)."""
+    __tablename__ = "firmendaten"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(200))
+    strasse = Column(String(150))
+    hausnummer = Column(String(10))
+    plz = Column(String(10))
+    ort = Column(String(100))
+    land = Column(String(2), default="DE")
+    ust_id = Column(String(20))        # USt-IdNr. (DE...)
+    steuernummer = Column(String(30))
+    iban = Column(String(34))
+    bic = Column(String(11))
+    bank = Column(String(100))
+    email = Column(String(254))
+    telefon = Column(String(30))
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class Rechnung(Base):
+    __tablename__ = "rechnungen"
+    id = Column(Integer, primary_key=True)
+    richtung = Column(String(10), default="ausgang")  # ausgang | eingang
+    # Nummer wird erst beim Festschreiben vergeben (lueckenloser Kreis)
+    nummer = Column(String(30), unique=True)
+    status = Column(String(20), default="entwurf")
+    # entwurf -> gestellt -> bezahlt | storniert; eingang: eingegangen -> bezahlt
+    kunden_id = Column(Integer, ForeignKey("kunden.id"))
+    projekt_id = Column(Integer, ForeignKey("projekte.id"))
+    datum = Column(Date)
+    leistung_von = Column(Date)
+    leistung_bis = Column(Date)
+    zahlungsziel_tage = Column(Integer, default=14)
+    faellig_am = Column(Date)
+    bemerkung = Column(Text)
+    # Eingangsrechnungen (empfangene E-Rechnungen)
+    lieferant = Column(String(200))
+    extern_nummer = Column(String(50))
+    betrag = Column(Numeric(12, 2))
+    dateiname = Column(String(200))
+    xml_roh = Column(Text)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class Rechnungsposition(Base):
+    __tablename__ = "rechnungspositionen"
+    id = Column(Integer, primary_key=True)
+    rechnung_id = Column(Integer, ForeignKey("rechnungen.id"))
+    pos = Column(Integer)
+    bezeichnung = Column(String(300))
+    menge = Column(Numeric(12, 3))
+    einheit = Column(String(20))       # Stück, Stunde, Tag, m, m2, m3, t, kg, pauschal
+    einzelpreis = Column(Numeric(12, 2))
+    ust_satz = Column(Integer, default=19)
+    erstellt_von = Column(String(50))
+    geaendert_von = Column(String(50))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

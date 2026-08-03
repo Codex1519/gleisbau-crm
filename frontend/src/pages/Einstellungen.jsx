@@ -1,9 +1,94 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { api } from '../api'
 import { Breadcrumb } from '../components/Breadcrumb'
 import { Sektion } from '../components/Sektion'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { IconSonne, IconMond } from '../components/Icons'
+import { speichereFirmendaten } from '../lib/rechnung'
+
+// Firmendaten = Absender aller Rechnungen (Pflicht für den XRechnung-Export)
+const FIRMEN_FELDER = [
+  { name: 'name', label: 'Firmenname', pflichtXml: true },
+  { name: 'strasse', label: 'Straße', pflichtXml: true },
+  { name: 'hausnummer', label: 'Hausnummer' },
+  { name: 'plz', label: 'PLZ', pflichtXml: true },
+  { name: 'ort', label: 'Ort', pflichtXml: true },
+  { name: 'ust_id', label: 'USt-IdNr. (DE…)', pflichtXml: true },
+  { name: 'steuernummer', label: 'Steuernummer' },
+  { name: 'iban', label: 'IBAN', pflichtXml: true },
+  { name: 'bic', label: 'BIC' },
+  { name: 'bank', label: 'Bank' },
+  { name: 'email', label: 'E-Mail (Rechnungen)', pflichtXml: true },
+  { name: 'telefon', label: 'Telefon' },
+]
+
+function FirmendatenSektion() {
+  const toast = useToast()
+  const [form, setForm] = useState(null)
+  const [speichert, setSpeichert] = useState(false)
+
+  useEffect(() => {
+    api
+      .list('firmendaten')
+      .then((fd) => setForm(fd))
+      .catch(() => setForm({}))
+  }, [])
+
+  async function speichern(event) {
+    event.preventDefault()
+    setSpeichert(true)
+    try {
+      await speichereFirmendaten(form)
+      toast.erfolg('Firmendaten gespeichert')
+    } catch (e) {
+      toast.fehler(e.message)
+    } finally {
+      setSpeichert(false)
+    }
+  }
+
+  if (!form) return null
+
+  return (
+    <Sektion titel="Firmendaten (Rechnungen)">
+      <p className="subtitel" style={{ marginBottom: 14 }}>
+        Diese Angaben erscheinen als Absender auf allen Rechnungen. Felder mit
+        * sind für den XRechnung-Export (E-Rechnung) erforderlich.
+      </p>
+      <form onSubmit={speichern}>
+        <div className="felder">
+          {FIRMEN_FELDER.map((f) => (
+            <label key={f.name} className="feld">
+              <span className="feld-label">
+                {f.label}
+                {f.pflichtXml && (
+                  <span className="feld-required" aria-hidden="true">
+                    *
+                  </span>
+                )}
+              </span>
+              <input
+                type="text"
+                value={form[f.name] ?? ''}
+                onChange={(e) =>
+                  setForm((alt) => ({ ...alt, [f.name]: e.target.value }))
+                }
+              />
+            </label>
+          ))}
+        </div>
+        <div className="form-actions">
+          <button type="submit" className="btn btn-primary" disabled={speichert}>
+            {speichert ? 'Wird gespeichert…' : 'Firmendaten speichern'}
+          </button>
+        </div>
+      </form>
+    </Sektion>
+  )
+}
 
 const THEMES = [
   {
@@ -33,7 +118,7 @@ const THEMES = [
 
 export function Einstellungen() {
   const { theme, setTheme } = useTheme()
-  const { benutzer } = useAuth()
+  const { benutzer, istAdmin } = useAuth()
 
   return (
     <div className="content">
@@ -91,6 +176,8 @@ export function Einstellungen() {
           </div>
         </div>
       </Sektion>
+
+      {istAdmin && <FirmendatenSektion />}
 
       <Sektion titel="Über">
         <div className="value-grid">

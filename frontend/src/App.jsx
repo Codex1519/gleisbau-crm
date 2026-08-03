@@ -25,6 +25,9 @@ import { BautagesberichteListe } from './pages/BautagesberichteListe'
 import { BautagesberichtNeu } from './pages/BautagesberichtNeu'
 import { BautagesberichtDetail } from './pages/BautagesberichtDetail'
 import { ProjekteListe } from './pages/ProjekteListe'
+import { RechnungenListe } from './pages/RechnungenListe'
+import { RechnungForm } from './pages/RechnungForm'
+import { RechnungDetail } from './pages/RechnungDetail'
 import './App.css'
 
 // Sondermodule mit individueller Detail-Seite (Akten-Ansicht mit Verknüpfungen).
@@ -95,6 +98,12 @@ export default function App() {
               </NurAdmin>
             }
           />
+
+          {/* Finanzen: Rechnungen (v1.0, manuell — nicht MODULE-getrieben) */}
+          <Route path="/rechnungen" element={<RechnungenListe />} />
+          <Route path="/rechnungen/neu" element={<RechnungForm />} />
+          <Route path="/rechnungen/:id" element={<RechnungDetail />} />
+          <Route path="/rechnungen/:id/bearbeiten" element={<RechnungForm />} />
 
           {MODULE.map((m) => {
             const CustomListe = CUSTOM_LISTE[m.key]
